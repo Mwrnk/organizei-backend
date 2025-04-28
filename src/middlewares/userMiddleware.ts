@@ -1,9 +1,10 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Response } from "express";
 import { User } from "../models/User";
 import { AppError } from "./errorHandler";
+import { AuthRequest } from "../types/express";
 
 export const validateUserData = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -24,14 +25,14 @@ export const validateUserData = async (
 };
 
 export const validateSignupData = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
     const { coduser, name, dateOfBirth, email, password } = req.body;
 
-    if (!coduser || !name || !email || !password || !dateOfBirth) {
+    if (!coduser || !name || !dateOfBirth || !email || !password) {
       throw new AppError("Todos os campos são obrigatórios", 400);
     }
 
@@ -47,7 +48,7 @@ export const validateSignupData = async (
 };
 
 export const validateLoginData = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -65,11 +66,16 @@ export const validateLoginData = async (
 };
 
 export const checkUserExists = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
+    // Não verifica usuário em rotas de signup
+    if (req.path === "/signup") {
+      return next();
+    }
+
     const { id } = req.params;
     const user = await User.findById(id);
 
@@ -77,8 +83,12 @@ export const checkUserExists = async (
       throw new AppError("Usuário não encontrado", 404);
     }
 
+    req.user = user;
     next();
   } catch (error) {
-    next(error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Erro ao verificar usuário", 500);
   }
 };
