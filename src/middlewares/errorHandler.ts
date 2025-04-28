@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
+import { Request, Response, NextFunction, ErrorRequestHandler } from "express";
 
 export class AppError extends Error {
   statusCode: number;
@@ -8,7 +8,7 @@ export class AppError extends Error {
   constructor(message: string, statusCode: number) {
     super(message);
     this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
     this.isOperational = true;
 
     Error.captureStackTrace(this, this.constructor);
@@ -29,10 +29,10 @@ export const errorHandler: ErrorRequestHandler = (
     return;
   }
 
-  console.error('Erro:', err);
+  console.error("Erro:", err);
 
   res.status(500).json({
-    status: 'error',
-    message: 'Erro interno do servidor',
+    status: "error",
+    message: "Erro interno do servidor",
   });
-}; 
+};
