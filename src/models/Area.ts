@@ -1,9 +1,9 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IArea extends Document {
-  _id:String;
+  _id: String;
   type: string;
-  user_id: string;  
+  user_id: string;
 }
 
 const areaSchema = new Schema<IArea>(
