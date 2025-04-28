@@ -1,11 +1,12 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { User } from "../models/User";
 import { hash, compare } from "../utils/hashManager";
 import { generateToken } from "../utils/tokenManager";
 import { AppError } from "../middlewares/errorHandler";
+import { AuthRequest } from "../types/express";
 
 export class UserController {
-  async editUser(req: Request, res: Response): Promise<void> {
+  async editUser(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const { name, dateOfBirth } = req.body;
@@ -37,7 +38,7 @@ export class UserController {
     }
   }
 
-  async signup(req: Request, res: Response): Promise<void> {
+  async signup(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { coduser, name, dateOfBirth, email, password } = req.body;
       
@@ -67,11 +68,14 @@ export class UserController {
         },
       });
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       throw new AppError("Erro ao criar usuário", 500);
     }
   }
 
-  async login(req: Request, res: Response): Promise<void> {
+  async login(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
       const user = await User.findOne({ email }).select("+password");
@@ -107,21 +111,28 @@ export class UserController {
     }
   }
 
-  async getUserById(req: Request, res: Response): Promise<void> {
+  async getUserById(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const user = await User.findById(id).select("-password");
+
+      if (!user) {
+        throw new AppError("Usuário não encontrado", 404);
+      }
 
       res.status(200).json({
         status: "success",
         data: user,
       });
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       throw new AppError("Erro ao buscar usuário", 500);
     }
   }
 
-  async getUsers(req: Request, res: Response): Promise<void> {
+  async getUsers(req: AuthRequest, res: Response): Promise<void> {
     try {
       const users = await User.find().select("-password");
 

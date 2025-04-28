@@ -2,7 +2,6 @@ import { List } from "./List";
 import mongoose, { Schema, Document } from "mongoose";
 
 interface ICard extends Document {
-  _id: String;
   List_id: String;
   Title: String;
   Priority: String;
@@ -19,11 +18,6 @@ interface IPdf {
 
 const cardSchema = new Schema<ICard>(
   {
-    _id: {
-      type: String,
-      required: [true, "ID do card é obrigatório"],
-      unique: true,
-    },
     List_id: {
       type: String,
       required: [true, "ID da lista é obrigatório"],
