@@ -8,6 +8,10 @@ interface ICard extends Document {
   is_published: Boolean;
   image_url: String[];
   pdfs: IPdf[];
+  likes: Number;
+  comments: Number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 interface IPdf {
   url: string;
@@ -43,6 +47,22 @@ const cardSchema = new Schema<ICard>(
     pdfs: {
       type: [Object],
       default: null,
+    },
+    likes: {
+      type: Number,
+      default: 0,
+    },
+    comments: {
+      type: Number,
+      default: 0,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   {

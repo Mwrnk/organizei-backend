@@ -8,11 +8,6 @@ export interface IArea extends Document {
 
 const areaSchema = new Schema<IArea>(
   {
-    _id: {
-      type: String,
-      required: [true, "ID da área é obrigatório"],
-      unique: true,
-    },
     type: {
       type: String,
       required: [true, "Tipo de área é obrigatório"],
