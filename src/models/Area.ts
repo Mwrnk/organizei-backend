@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IArea extends Document {
   _id: String;
   type: string;
-  user_id: string;
+  userId: mongoose.Types.ObjectId;
 }
 
 const areaSchema = new Schema<IArea>(
@@ -14,8 +14,9 @@ const areaSchema = new Schema<IArea>(
       enum: ["Escolar", "Profissional"],
       default: "Escolar",
     },
-    user_id: {
-      type: String,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: [true, "ID do usuário é obrigatório"],
     },
   },

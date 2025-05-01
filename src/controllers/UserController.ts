@@ -6,14 +6,39 @@ import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 
 export class UserController {
+  
+  async uploadProfileImage(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { image } = req.body;
+  
+      const user = await User.findByIdAndUpdate(
+        id,
+        { profileImage: image },
+        { new: true }
+      );
+  
+      if (!user) {
+        throw new AppError("Usuário não encontrado", 404);
+      }
+  
+      res.status(200).json({
+        status: "success",
+        data: user,
+      });
+    } catch (error) {
+      throw new AppError("Erro ao salvar imagem de perfil", 500);
+    }
+  }
+
   async editUser(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { name, dateOfBirth } = req.body;
+      const { name, dateOfBirth, image} = req.body;
 
       const updatedUser = await User.findByIdAndUpdate(
         id,
-        { name, dateOfBirth },
+        { name, dateOfBirth, profileImage: image },
         { new: true, runValidators: true }
       );
 

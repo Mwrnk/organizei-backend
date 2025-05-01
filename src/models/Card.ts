@@ -2,9 +2,9 @@ import { List } from "./List";
 import mongoose, { Schema, Document } from "mongoose";
 
 interface ICard extends Document {
-  List_id: String;
-  Title: String;
-  Priority: String;
+  listId: String;
+  title: String;
+  priority: String;
   is_published: Boolean;
   image_url: String[];
   pdfs: IPdf[];
@@ -22,16 +22,17 @@ interface IPdf {
 
 const cardSchema = new Schema<ICard>(
   {
-    List_id: {
-      type: String,
+    listId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "List",
       required: [true, "ID da lista é obrigatório"],
     },
-    Title: {
+    title: {
       type: String,
       required: [true, "Título do card é obrigatório"],
       trim: true,
     },
-    Priority: {
+    priority: {
       type: String,
       enum: ["Baixa", "Média", "Alta"],
       default: "Baixa",
