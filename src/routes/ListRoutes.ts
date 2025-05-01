@@ -9,5 +9,6 @@ router.post("/lists", validateCreateList, (req, res) => listController.createLis
 router.get("/lists", (req, res) => listController.getLists(req, res));
 router.get("/lists/:id", validateGetListById, (req, res) => listController.getListById(req, res));
 router.put("/lists/:id", validateEditList, (req, res) => listController.editList(req, res));
+router.get("/lists/:userId/lists", (req, res) => listController.getListByUserId(req, res));
 
 export default router;
