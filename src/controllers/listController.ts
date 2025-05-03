@@ -4,9 +4,13 @@ import { AppError } from "../middlewares/errorHandler";
 
 export class ListController {
   async createList(req: Request, res: Response): Promise<void> {
-    const { name } = req.body;
+    const { name, userId } = req.body;
 
-    const list = await List.create({ name });
+    if (!name || !userId) {
+      throw new AppError("Nome ou ID do usuário ausente", 400);
+    }
+
+    const list = await List.create({ name, userId });
 
     res.status(201).json({
       status: "success",
@@ -48,9 +52,10 @@ export class ListController {
     if (!userId) {
       throw new AppError("Usuário não encontrado", 404);
     }
-    if (lists.length === 0) {
-      throw new AppError("Nenhuma lista encontrada para este usuário", 404);
-    }
+    // if (lists.length === 0) {
+    //   throw new AppError("Nenhuma lista encontrada para este usuário", 404);
+    // }
+    //esta dando erro crashando o banco de dados 
 
     res.status(200).json({
       status: "success",
@@ -60,7 +65,7 @@ export class ListController {
       })),
     });
   }
-    
+
   async getListById(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     const list = await List.findById(id);

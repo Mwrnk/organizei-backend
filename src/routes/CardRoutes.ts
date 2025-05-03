@@ -1,14 +1,18 @@
-import { Router } from 'express';
-import { CardController } from '../controllers/cardController';
-import { authMiddleware } from '../middlewares/authMiddleware';
+import { Router } from "express";
+import { CardController } from "../controllers/cardController";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 const cardController = new CardController();
 
-router.post('/cards', authMiddleware, cardController.createCard);
-router.put('/cards/:id', authMiddleware, cardController.editCard);
-router.get('/cards/:id', authMiddleware, cardController.getCardById);
-router.get('/cards/:name', authMiddleware, cardController.getCardByName);
-router.delete('/cards/:id', authMiddleware, cardController.deleteCard);
+router.post("/cards", authMiddleware, cardController.createCard);
+router.put("/cards/:id", authMiddleware, cardController.editCard);
+router.get("/cards/:id", authMiddleware, cardController.getCardById);
+router.get("/cards/:title", authMiddleware, cardController.getCardByTitle);
+router.delete("/cards/:id", authMiddleware, cardController.deleteCard);
+//nova rota criada para buscar lista com cards criados
+router.get("/cards/list/:listId", authMiddleware, (req, res) =>
+  cardController.getCardsByListId(req, res)
+);
 
 export default router;
