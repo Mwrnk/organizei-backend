@@ -4,9 +4,13 @@ import { AppError } from "../middlewares/errorHandler";
 
 export class ListController {
   async createList(req: Request, res: Response): Promise<void> {
-    const { name } = req.body;
+    const { name, userId } = req.body;
 
-    const list = await List.create({ name });
+    if (!name || !userId) {
+      throw new AppError("Nome e ID do usuário são obrigatórios", 400);
+    }
+
+    const list = await List.create({ name, userId });
 
     res.status(201).json({
       status: "success",
@@ -16,7 +20,6 @@ export class ListController {
       },
     });
   }
-
   async editList(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     const { name } = req.body;
@@ -60,7 +63,7 @@ export class ListController {
       })),
     });
   }
-    
+
   async getListById(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     const list = await List.findById(id);
@@ -105,4 +108,3 @@ export class ListController {
     });
   }
 }
-
