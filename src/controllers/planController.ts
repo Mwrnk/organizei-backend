@@ -20,7 +20,13 @@ export class PlanController {
         throw new AppError("Plano já existe", 400);
       }
 
-      const plan = await Plan.create({ name, price, features, duration, isDefault });
+      const plan = await Plan.create({
+        name,
+        price,
+        features,
+        duration,
+        isDefault,
+      });
 
       res.status(201).json({
         status: "success",
@@ -68,11 +74,11 @@ export class PlanController {
       // Encerrar plano atual se existir
       if (user.plan) {
         await PlanHistory.findOneAndUpdate(
-          { userId: user._id, status: 'active' },
-          { 
+          { userId: user._id, status: "active" },
+          {
             endDate: new Date(),
-            status: 'cancelled',
-            reason: 'Mudança de plano'
+            status: "cancelled",
+            reason: "Mudança de plano",
           }
         );
       }
@@ -81,7 +87,7 @@ export class PlanController {
       await PlanHistory.create({
         userId: user._id,
         planId: plan._id,
-        reason: 'Atualização de plano'
+        reason: "Atualização de plano",
       });
 
       // Atualizar plano do usuário
@@ -103,7 +109,7 @@ export class PlanController {
       const { userId } = req.params;
 
       const history = await PlanHistory.find({ userId })
-        .populate('planId')
+        .populate("planId")
         .sort({ startDate: -1 });
 
       res.status(200).json({
@@ -118,8 +124,8 @@ export class PlanController {
 
   async checkExpiredPlans(): Promise<void> {
     try {
-      const activePlans = await PlanHistory.find({ status: 'active' });
-      
+      const activePlans = await PlanHistory.find({ status: "active" });
+
       for (const planHistory of activePlans) {
         const plan = await Plan.findById(planHistory.planId);
         if (!plan) continue;
@@ -135,25 +141,53 @@ export class PlanController {
           // Atualizar histórico do plano atual
           await PlanHistory.findByIdAndUpdate(planHistory._id, {
             endDate: new Date(),
-            status: 'expired',
-            reason: 'Plano expirado'
+            status: "expired",
+            reason: "Plano expirado",
           });
 
           // Criar novo registro com plano padrão
           await PlanHistory.create({
             userId: planHistory.userId,
             planId: defaultPlan._id,
-            reason: 'Retorno ao plano padrão após expiração'
+            reason: "Retorno ao plano padrão após expiração",
           });
 
           // Atualizar plano do usuário
           await User.findByIdAndUpdate(planHistory.userId, {
-            plan: defaultPlan._id
+            plan: defaultPlan._id,
           });
         }
       }
     } catch (error) {
       console.error("Erro ao verificar planos expirados:", error);
+    }
+  }
+
+  //FEITO POR MATHEUS RBAS
+  //BUSCANDO O PLANO ATUAL DO USUARIO 
+  async getUserCurrentPlan(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+
+      const user = await User.findById(userId).populate("plan");
+      if (!user) {
+        throw new AppError("Usuário não encontrado", 404);
+      }
+
+      if (!user.plan) {
+        res.status(404).json({
+          status: "fail",
+          message: "Usuário não possui um plano ativo.",
+        });
+      }
+
+      res.status(200).json({
+        status: "success",
+        data: user.plan,
+      });
+    } catch (error) {
+      console.error("Erro ao buscar plano do usuário:", error);
+      throw new AppError("Erro ao buscar plano do usuário", 500);
     }
   }
 }
