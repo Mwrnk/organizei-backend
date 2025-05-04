@@ -96,7 +96,7 @@ export class CardController {
       throw new AppError("Erro ao buscar cartão", 500);
     }
   }
-// modificado para receber title e nao nome igual estava
+  // modificado para receber title e nao nome igual estava
   async getCardByTitle(req: Request, res: Response): Promise<void> {
     try {
       const { title } = req.params;
@@ -118,7 +118,7 @@ export class CardController {
       throw new AppError("Erro ao buscar cartão", 500);
     }
   }
-//buscando cards de uma lista especifica
+  //buscando cards de uma lista especifica
   async getCardsByListId(req: Request, res: Response): Promise<void> {
     const { listId } = req.params;
 
@@ -129,5 +129,31 @@ export class CardController {
       data: cards,
     });
   }
-  
+  //FEITO POR MATHEUS RIBAS 
+  //ENDPOINT PARA BUSCAR TODOS OS CARDS CRIADOS 
+async getAllCards(req: Request, res: Response): Promise<void> {
+  try {
+    const cards = await Card.find()
+      .sort({ createdAt: -1 })
+      .limit(12)
+      .populate({
+        path: "listId",
+        populate: {
+          path: "userId"
+         
+        },
+      });
+
+    res.status(200).json({
+      status: "success",
+      data: cards,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "Erro ao buscar os cards",
+    });
+  }
+}
+
 }
