@@ -11,8 +11,9 @@ router.get("/cards/:id", authMiddleware, cardController.getCardById);
 router.get("/cards/:title", authMiddleware, cardController.getCardByTitle);
 router.delete("/cards/:id", authMiddleware, cardController.deleteCard);
 //nova rota criada para buscar lista com cards criados
-router.get("/cards/list/:listId", authMiddleware, (req, res) =>
-  cardController.getCardsByListId(req, res)
-);
+router.get("/cards/list/:listId", authMiddleware, (req, res) => cardController.getCardsByListId(req, res));
+ //FEITO POR MATHEUS RIBAS
+ //ROTA PARA BUSCAR TODOS OS CARDS
+router.get("/cards", authMiddleware, cardController.getAllCards);
 
 export default router;
