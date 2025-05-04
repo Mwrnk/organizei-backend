@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import { env } from "./config/env";
 import connectDB from "./config/database";
 import { errorHandler } from "./middlewares/errorHandler";
 import userRoutes from "./routes/userRoutes";
@@ -10,7 +9,10 @@ import listRoutes from "./routes/ListRoutes";
 import cardRoutes from "./routes/CardRoutes";
 
 //importando a rota de comentários
-import commentRoutes from "./routes/CommentRoutes";
+import commentRoutes from "./routes/commentRoutes";
+
+// Importando a rota de área
+import areaRoutes from "./routes/areaRoutes";
 
 import cron from "node-cron";
 import { checkExpiredPlansJob } from "./jobs/checkExpiredPlans";
@@ -28,7 +30,7 @@ app.use("/", planRoutes);
 app.use("/", listRoutes);
 app.use("/", cardRoutes);
 app.use("/", commentRoutes);
-
+app.use("/", areaRoutes);
 
 // Middleware de tratamento de erros
 app.use(errorHandler);
@@ -48,7 +50,7 @@ app.get("/", (req, res) => {
 });
 
 // Porta
-const PORT = env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // Ajustando para não depender de dotenv
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
