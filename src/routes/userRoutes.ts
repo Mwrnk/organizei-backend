@@ -24,5 +24,8 @@ router.patch("/users/:id", checkUserExists, validateUserData, userController.edi
 
 // Rota que não precisa verificar usuário específico
 router.get("/users", userController.getUsers);
+//FEITO POR MATHEUS RIBAS
+//ROTA PARA ADICIONAR A IMAGEM DO USUARIO 
+router.patch("/users/:id/image", checkUserExists, userController.uploadProfileImage);
 
 export default router;
