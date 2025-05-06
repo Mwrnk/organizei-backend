@@ -4,9 +4,9 @@ import connectDB from "./config/database";
 import { errorHandler } from "./middlewares/errorHandler";
 import userRoutes from "./routes/userRoutes";
 import planRoutes from "./routes/planRoutes";
-import listRoutes from "./routes/ListRoutes";
+import listRoutes from "./routes/listRoutes";
 //importando a rota de cards
-import cardRoutes from "./routes/CardRoutes";
+import cardRoutes from "./routes/cardRoutes";
 
 //importando a rota de comentários
 import commentRoutes from "./routes/commentRoutes";

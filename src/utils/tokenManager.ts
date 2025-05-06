@@ -3,18 +3,26 @@ import { AppError } from '../middlewares/errorHandler';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-export const generateToken = (userId: string, expiresIn: jwt.SignOptions["expiresIn"] = '24h'): string => {
+export interface TokenPayload {
+  id: string;
+  email: string;
+}
+
+export const generateToken = (userId: string, email: string, expiresIn: jwt.SignOptions["expiresIn"] = '24h'): string => {
   try {
-    return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn });
+    return jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn });
   } catch (error) {
     throw new AppError('Erro ao gerar token', 500);
   }
 };
 
-export const verifyToken = (token: string): { id: string } => {
+export const verifyToken = (token: string): TokenPayload => {
   try {
-    return jwt.verify(token, JWT_SECRET) as { id: string };
+    return jwt.verify(token, JWT_SECRET) as TokenPayload;
   } catch (error) {
-    throw new AppError('Token inválido ou expirado', 401);
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new AppError('Token expirado', 401);
+    }
+    throw new AppError('Token inválido', 401);
   }
 };

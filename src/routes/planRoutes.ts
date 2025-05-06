@@ -8,6 +8,7 @@ const planController = new PlanController();
 // Rotas públicas
 router.get("/plans", (req, res) => planController.listPlans(req, res));
 
+router.use(authMiddleware);
 // Rotas protegidas
 router.post("/plans", authMiddleware, (req, res) => planController.createPlan(req, res));
 router.put("/users/:userId/plan", authMiddleware, (req, res) => planController.updateUserPlan(req, res));

@@ -6,22 +6,22 @@ import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 
 export class UserController {
-  
+
   async uploadProfileImage(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const { image } = req.body;
-  
+
       const user = await User.findByIdAndUpdate(
         id,
         { profileImage: image },
         { new: true }
       );
-  
+
       if (!user) {
         throw new AppError("Usuário não encontrado", 404);
       }
-  
+
       res.status(200).json({
         status: "success",
         data: user,
@@ -34,7 +34,7 @@ export class UserController {
   async editUser(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { name, dateOfBirth, image} = req.body;
+      const { name, dateOfBirth, image } = req.body;
 
       const updatedUser = await User.findByIdAndUpdate(
         id,
@@ -66,7 +66,7 @@ export class UserController {
   async signup(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { coduser, name, dateOfBirth, email, password } = req.body;
-      
+
       const hashedPassword = await hash(password);
       const user = await User.create({
         coduser,
@@ -77,7 +77,7 @@ export class UserController {
         role: "user",
       });
 
-      const token = generateToken(user._id as string);
+      const token = generateToken(user._id as string, user.email);
 
       res.status(201).json({
         status: "success",
@@ -115,7 +115,7 @@ export class UserController {
         throw new AppError("Senha incorreta", 401);
       }
 
-      const token = generateToken(user._id as string);
+      const token = generateToken(user._id as string, user.email);
 
       res.status(200).json({
         status: "success",

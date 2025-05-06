@@ -1,21 +1,26 @@
 import { Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { AppError } from './errorHandler';
 import { AuthRequest } from '../types/express';
+import { verifyToken } from '../utils/tokenManager';
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
+    if (!authHeader) {
       throw new AppError('Token não fornecido', 401);
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as jwt.JwtPayload;
+    const [token] = authHeader.split(' ');
+
+    const decoded = verifyToken(token);
     req.user = decoded;
 
     next();
   } catch (error) {
-    throw new AppError('Token inválido', 401);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError('Erro na autenticação', 401);
   }
 }; 
