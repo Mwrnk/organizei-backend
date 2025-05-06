@@ -1,19 +1,38 @@
 import { Router } from "express";
 import { CardController } from "../controllers/cardController";
 import { authMiddleware } from "../middlewares/authMiddleware";
+import {
+  validateCardData,
+  validateCardUpdateData,
+  checkCardById,
+  checkCardByTitle,
+} from "../middlewares/cardMiddlewares";
 
 const router = Router();
 const cardController = new CardController();
 
-router.post("/cards", authMiddleware, cardController.createCard);
-router.put("/cards/:id", authMiddleware, cardController.editCard);
-router.get("/cards/:id", authMiddleware, cardController.getCardById);
-router.get("/cards/:title", authMiddleware, cardController.getCardByTitle);
-router.delete("/cards/:id", authMiddleware, cardController.deleteCard);
-//nova rota criada para buscar lista com cards criados
-router.get("/cards/list/:listId", authMiddleware, (req, res) => cardController.getCardsByListId(req, res));
- //FEITO POR MATHEUS RIBAS
- //ROTA PARA BUSCAR TODOS OS CARDS
-router.get("/cards", authMiddleware, cardController.getAllCards);
+// Aplicar autenticação em todas as rotas
+router.use(authMiddleware);
+
+// Buscar todos os cards
+router.get("/cards", cardController.getAllCards);
+
+// Criar um novo card
+router.post("/cards", validateCardData, cardController.createCard);
+
+// Atualizar card
+router.patch("/cards/:id", checkCardById, validateCardUpdateData, cardController.editCard);
+
+// Buscar card por ID
+router.get("/cards/:id", checkCardById, cardController.getCardById);
+
+// Buscar card por título
+router.get("/cards/title/:title", checkCardByTitle, cardController.getCardByTitle);
+
+// Buscar cards por lista
+router.get("/lists/:listId/cards", cardController.getCardsByListId);
+
+// Deletar card
+router.delete("/cards/:id", checkCardById, cardController.deleteCard);
 
 export default router;

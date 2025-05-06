@@ -1,15 +1,31 @@
 import { Router } from "express";
 import { ListController } from "../controllers/listController";
-import { validateCreateList, validateEditList, validateGetListById } from "../middlewares/listMiddlewares";
+import {
+  validateListData,
+  validateListUpdateData,
+  checkListExists,
+  checkUserLists,
+} from "../middlewares/listMiddlewares";
 
 const router = Router();
 const listController = new ListController();
 
-router.post("/lists", validateCreateList, (req, res) => listController.createList(req, res));
-router.get("/lists", (req, res) => listController.getLists(req, res));
-router.get("/lists/:id", validateGetListById, (req, res) => listController.getListById(req, res));
-router.put("/lists/:id", validateEditList, (req, res) => listController.editList(req, res));
-router.get("/lists/:userId/lists", (req, res) => listController.getListByUserId(req, res));
-router.delete("/lists/:id", (req, res) => listController.deleteList(req, res));
+// Criar uma nova lista
+router.post("/lists", validateListData, listController.createList);
+
+// Buscar todas as listas
+router.get("/lists", listController.getLists);
+
+// Buscar lista por ID
+router.get("/lists/:id", checkListExists, listController.getListById);
+
+// Atualizar lista
+router.put("/lists/:id", checkListExists, validateListUpdateData, listController.editList);
+
+// Buscar listas por usuário
+router.get("/users/:userId/lists", checkUserLists, listController.getListByUserId);
+
+// Deletar lista
+router.delete("/lists/:id", checkListExists, listController.deleteList);
 
 export default router;
