@@ -1,110 +1,118 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { List } from "../models/List";
 import { AppError } from "../middlewares/errorHandler";
+import { AuthRequest } from "../types/express";
 
 export class ListController {
-  async createList(req: Request, res: Response): Promise<void> {
-    const { name, userId } = req.body;
+  async createList(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { name, userId } = req.body;
+      const list = await List.create({ name, userId });
 
-    if (!name || !userId) {
-      throw new AppError("Nome e ID do usuário são obrigatórios", 400);
+      res.status(201).json({
+        status: "success",
+        data: {
+          id: list._id,
+          name: list.name,
+        },
+      });
+    } catch (error) {
+      throw new AppError("Erro ao criar lista", 500);
     }
-
-    const list = await List.create({ name, userId });
-
-    res.status(201).json({
-      status: "success",
-      data: {
-        id: list._id,
-        name: list.name,
-      },
-    });
-  }
-  async editList(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
-    const { name } = req.body;
-
-    const updatedList = await List.findByIdAndUpdate(
-      id,
-      { name },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedList) {
-      throw new AppError("Lista não encontrada", 404);
-    }
-
-    res.status(200).json({
-      status: "success",
-      data: {
-        id: updatedList._id,
-        name: updatedList.name,
-      },
-    });
   }
 
-  async getListByUserId(req: Request, res: Response): Promise<void> {
-    const { userId } = req.params;
+  async editList(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { name } = req.body;
 
-    const lists = await List.find({ userId });
+      const updatedList = await List.findByIdAndUpdate(
+        id,
+        { name },
+        { new: true, runValidators: true }
+      );
 
-    if (!userId) {
-      throw new AppError("Usuário não encontrado", 404);
+      if (!updatedList) {
+        throw new AppError("Lista não encontrada", 404);
+      }
+
+      res.status(200).json({
+        status: "success",
+        data: {
+          id: updatedList._id,
+          name: updatedList.name,
+        },
+      });
+    } catch (error) {
+      throw new AppError("Erro ao editar lista", 500);
     }
-    if (lists.length === 0) {
-      throw new AppError("Nenhuma lista encontrada para este usuário", 404);
-    }
-
-    res.status(200).json({
-      status: "success",
-      data: lists.map((list) => ({
-        id: list._id,
-        name: list.name,
-      })),
-    });
   }
 
-  async getListById(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
-    const list = await List.findById(id);
+  async getListByUserId(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const lists = await List.find({ userId });
 
-    if (!list) {
-      throw new AppError("Lista não encontrada", 404);
+      res.status(200).json({
+        status: "success",
+        data: lists.map((list) => ({
+          id: list._id,
+          name: list.name,
+        })),
+      });
+    } catch (error) {
+      throw new AppError("Erro ao buscar listas do usuário", 500);
     }
-
-    res.status(200).json({
-      status: "success",
-      data: {
-        id: list._id,
-        name: list.name,
-      },
-    });
   }
 
-  async getLists(req: Request, res: Response): Promise<void> {
-    const lists = await List.find();
+  async getListById(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const list = await List.findById(id);
 
-    res.status(200).json({
-      status: "success",
-      data: lists.map((list) => ({
-        id: list._id,
-        name: list.name,
-      })),
-    });
+      if (!list) {
+        throw new AppError("Lista não encontrada", 404);
+      }
+
+      res.status(200).json({
+        status: "success",
+        data: {
+          id: list._id,
+          name: list.name,
+        },
+      });
+    } catch (error) {
+      throw new AppError("Erro ao buscar lista", 500);
+    }
   }
 
-  async deleteList(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+  async getLists(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const lists = await List.find();
 
-    const deletedList = await List.findByIdAndDelete(id);
-
-    if (!deletedList) {
-      throw new AppError("Lista não encontrada", 404);
+      res.status(200).json({
+        status: "success",
+        data: lists.map((list) => ({
+          id: list._id,
+          name: list.name,
+        })),
+      });
+    } catch (error) {
+      throw new AppError("Erro ao buscar listas", 500);
     }
+  }
 
-    res.status(204).json({
-      status: "success",
-      data: null,
-    });
+  async deleteList(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      await List.findByIdAndDelete(id);
+
+      res.status(204).json({
+        status: "success",
+        data: null,
+      });
+    } catch (error) {
+      throw new AppError("Erro ao deletar lista", 500);
+    }
   }
 }

@@ -1,32 +1,96 @@
-import { Request, Response, NextFunction } from "express";
-import { AppError } from "./errorHandler"; // caminho correto!
+import { NextFunction, Response } from "express";
+import { List } from "../models/List";
+import { AppError } from "./errorHandler";
+import { AuthRequest } from "../types/express";
 
-export const validateCreateList = (req: Request, res: Response, next: NextFunction): void => {
-  const { name } = req.body;
+export const validateListData = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { name, userId } = req.body;
 
-  if (!name || typeof name !== "string") {
-    throw new AppError("O nome da lista é obrigatório e deve ser uma string.", 400);
+    if (!name || !userId) {
+      throw new AppError("Nome e ID do usuário são obrigatórios", 400);
+    }
+
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  next();
 };
 
-export const validateEditList = (req: Request, res: Response, next: NextFunction): void => {
-  const { name } = req.body;
+export const validateListUpdateData = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { name } = req.body;
 
-  if (!name || typeof name !== "string") {
-    throw new AppError("Nome inválido para edição da lista.", 400);
+    if (!name) {
+      throw new AppError("O nome é obrigatório para atualização", 400);
+    }
+
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  next();
 };
 
-export const validateGetListById = (req: Request, res: Response, next: NextFunction): void => {
-  const { id } = req.params;
+export const checkListExists = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
 
-  if (!id || typeof id !== "string") {
-    throw new AppError("ID inválido para busca da lista.", 400);
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      throw new AppError("ID inválido", 400);
+    }
+
+    const list = await List.findById(id);
+
+    if (!list) {
+      throw new AppError("Lista não encontrada", 404);
+    }
+
+    req.list = list;
+    next();
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Erro ao verificar lista", 500);
   }
+};
 
-  next();
+export const checkUserLists = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      throw new AppError("ID do usuário é obrigatório", 400);
+    }
+
+    const lists = await List.find({ userId });
+
+    if (lists.length === 0) {
+      throw new AppError("Nenhuma lista encontrada para este usuário", 404);
+    }
+
+    req.lists = lists;
+    next();
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Erro ao buscar listas do usuário", 500);
+  }
 };
