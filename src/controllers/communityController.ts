@@ -1,94 +1,116 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { Card } from "../models/card";
 import { AppError } from "../middlewares/errorHandler";
+import { AuthRequest } from "../types/express";
 
 export class CommunityController {
   // Publicar um card na comunidade
-  async publishCard(req: Request, res: Response): Promise<void> {
+  async publishCard(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
-
-      const card = await Card.findByIdAndUpdate(
-        id,
-        { is_published: true },
-        { new: true }
-      );
+      const card = req.card;
 
       if (!card) {
         throw new AppError("Cartão não encontrado", 404);
       }
+
+      card.is_published = true;
+      await card.save();
 
       res.status(200).json({
         status: "success",
         message: "Cartão publicado com sucesso!",
-        data: card,
+        data: {
+          id: card._id,
+          title: card.title,
+          is_published: card.is_published
+        }
       });
     } catch (error) {
-      res.status(500).json({
-        status: "error",
-        message: error instanceof AppError ? error.message : "Erro interno",
-      });
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao publicar cartão", 500);
     }
   }
 
   // Listar todos os cards publicados
-  async getPublishedCards(req: Request, res: Response): Promise<void> {
+  async getPublishedCards(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const cards = await Card.find({ is_published: true }).sort({ createdAt: -1 });
+      const cards = await Card.find({ is_published: true })
+        .sort({ createdAt: -1 })
+        .populate({
+          path: "userId",
+          select: "name email"
+        });
 
       res.status(200).json({
         status: "success",
-        data: cards,
+        data: cards.map(card => ({
+          id: card._id,
+          title: card.title,
+          priority: card.priority,
+          downloads: card.downloads,
+          likes: card.likes,
+          comments: card.comments,
+          user: card.userId
+        }))
       });
     } catch (error) {
-      res.status(500).json({
-        status: "error",
-        message: "Erro ao buscar os cards publicados",
-      });
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao buscar os cards publicados", 500);
     }
   }
 
   // Registrar download de um card
-  async downloadCard(req: Request, res: Response): Promise<void> {
+  async downloadCard(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
+      const card = req.card;
+      const userId = req.user?.id;
 
-      // Verifica se o card existe e está publicado
-      const card = await Card.findById(id);
-      if (!card) {
-        throw new AppError("Cartão não encontrado", 404);
-      }
-      if (!card.is_published) {
-        throw new AppError("Cartão não está publicado", 403);
+      if (!userId) {
+        throw new AppError("Usuário não autenticado", 401);
       }
 
       // Incrementa o contador de downloads
       card.downloads = Number(card.downloads) + 1;
       await card.save();
 
-      // Retorna os dados do card no formato JSON
+      // Cria uma cópia do card para o usuário
+      const cardCopy = await Card.create({
+        ...card.toObject(),
+        _id: undefined,
+        userId: userId,
+        downloads: 0,
+        likes: 0,
+        comments: 0,
+        is_published: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
       res.status(200).json({
         status: "success",
-        message: "Download realizado com sucesso!",
+        message: "Download e duplicação realizados com sucesso!",
         data: {
-          id: card._id,
-          title: card.title,
-          listId: card.listId,
-          downloads: card.downloads,
-        },
+          originalCard: {
+            id: card._id,
+            title: card.title,
+            downloads: card.downloads,
+          },
+          duplicatedCard: {
+            id: cardCopy._id,
+            title: cardCopy.title,
+            userId: cardCopy.userId,
+          }
+        }
       });
     } catch (error) {
       if (error instanceof AppError) {
-        res.status(error.statusCode).json({
-          status: "error",
-          message: error.message,
-        });
-      } else {
-        res.status(500).json({
-          status: "error",
-          message: "Erro ao realizar o download",
-        });
+        throw error;
       }
+      throw new AppError("Erro ao realizar o download e duplicação", 500);
     }
   }
 }

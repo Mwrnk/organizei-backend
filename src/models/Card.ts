@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 interface ICard extends Document {
   listId: String;
+  userId: String;
   title: String;
   priority: String;
   is_published: Boolean;
@@ -26,6 +27,11 @@ const cardSchema = new Schema<ICard>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "List",
       required: [true, "ID da lista é obrigatório"],
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "ID do usuário é obrigatório"],
     },
     title: {
       type: String,
