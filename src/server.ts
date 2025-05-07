@@ -5,11 +5,9 @@ import { errorHandler } from "./middlewares/errorHandler";
 import userRoutes from "./routes/userRoutes";
 import planRoutes from "./routes/planRoutes";
 import listRoutes from "./routes/listRoutes";
-//importando a rota de cards
 import cardRoutes from "./routes/cardRoutes";
-
-//importando a rota de comentários
 import commentRoutes from "./routes/commentRoutes";
+import communityRoutes from "./routes/communityRoutes";
 
 import cron from "node-cron";
 import { checkExpiredPlansJob } from "./jobs/checkExpiredPlans";
@@ -27,6 +25,7 @@ app.use("/", planRoutes);
 app.use("/", listRoutes);
 app.use("/", cardRoutes);
 app.use("/", commentRoutes);
+app.use("/", communityRoutes);
 
 // Middleware de tratamento de erros
 app.use(errorHandler);
