@@ -11,9 +11,6 @@ import cardRoutes from "./routes/cardRoutes";
 //importando a rota de comentários
 import commentRoutes from "./routes/commentRoutes";
 
-// Importando a rota de área
-import areaRoutes from "./routes/areaRoutes";
-
 import cron from "node-cron";
 import { checkExpiredPlansJob } from "./jobs/checkExpiredPlans";
 
@@ -30,7 +27,6 @@ app.use("/", planRoutes);
 app.use("/", listRoutes);
 app.use("/", cardRoutes);
 app.use("/", commentRoutes);
-app.use("/", areaRoutes);
 
 // Middleware de tratamento de erros
 app.use(errorHandler);
