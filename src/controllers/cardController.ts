@@ -57,6 +57,10 @@ export class CardController {
         { new: true, runValidators: true }
       );
 
+      if (!updatedCard) {
+        throw new AppError("Cartão não encontrado", 404);
+      }
+
       res.status(200).json({
         status: "success",
         data: {
