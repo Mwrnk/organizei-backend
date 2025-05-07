@@ -35,4 +35,7 @@ router.get("/lists/:listId/cards", cardController.getCardsByListId);
 // Deletar card
 router.delete("/cards/:id", checkCardById, cardController.deleteCard);
 
+// Dar like no card
+router.post("/cards/:id/like", checkCardById, cardController.likeCard);
+
 export default router;

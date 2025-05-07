@@ -1,8 +1,8 @@
 import { Response } from "express";
-import { Card } from "../models/card"
+import { Card } from "../models/card";
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
-
+import { User } from "../models/user";
 
 export class CardController {
   async createCard(req: AuthRequest, res: Response): Promise<void> {
@@ -14,10 +14,10 @@ export class CardController {
         throw new AppError("Usuário não autenticado", 401);
       }
 
-      const card = await Card.create({ 
-        title, 
+      const card = await Card.create({
+        title,
         listId,
-        userId 
+        userId,
       });
 
       res.status(201).json({
@@ -26,7 +26,7 @@ export class CardController {
           id: card._id,
           title: card.title,
           listId: card.listId,
-          userId: card.userId
+          userId: card.userId,
         },
       });
     } catch (error) {
@@ -48,7 +48,10 @@ export class CardController {
       }
 
       if (card.userId.toString() !== userId) {
-        throw new AppError("Você não tem permissão para editar este cartão", 403);
+        throw new AppError(
+          "Você não tem permissão para editar este cartão",
+          403
+        );
       }
 
       const updatedCard = await Card.findByIdAndUpdate(
@@ -66,7 +69,7 @@ export class CardController {
         data: {
           id: updatedCard._id,
           title: updatedCard.title,
-          userId: updatedCard.userId
+          userId: updatedCard.userId,
         },
       });
     } catch (error) {
@@ -87,7 +90,10 @@ export class CardController {
       }
 
       if (card.userId.toString() !== userId) {
-        throw new AppError("Você não tem permissão para deletar este cartão", 403);
+        throw new AppError(
+          "Você não tem permissão para deletar este cartão",
+          403
+        );
       }
 
       await Card.findByIdAndDelete(card._id);
@@ -103,7 +109,7 @@ export class CardController {
   async getCardById(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
-      
+
       res.status(200).json({
         status: "success",
         data: {
@@ -112,7 +118,7 @@ export class CardController {
           priority: card.priority,
           is_published: card.is_published,
           userId: card.userId,
-          listId: card.listId
+          listId: card.listId,
         },
       });
     } catch (error) {
@@ -150,12 +156,12 @@ export class CardController {
 
       res.status(200).json({
         status: "success",
-        data: cards.map(card => ({
+        data: cards.map((card) => ({
           id: card._id,
           title: card.title,
           priority: card.priority,
           is_published: card.is_published,
-          userId: card.userId
+          userId: card.userId,
         })),
       });
     } catch (error) {
@@ -179,19 +185,19 @@ export class CardController {
         .populate({
           path: "listId",
           populate: {
-            path: "userId"
+            path: "userId",
           },
         });
 
       res.status(200).json({
         status: "success",
-        data: cards.map(card => ({
+        data: cards.map((card) => ({
           id: card._id,
           title: card.title,
           priority: card.priority,
           is_published: card.is_published,
           userId: card.userId,
-          listId: card.listId
+          listId: card.listId,
         })),
       });
     } catch (error) {
@@ -199,6 +205,45 @@ export class CardController {
         throw error;
       }
       throw new AppError("Erro ao buscar os cards", 500);
+    }
+  }
+
+  async likeCard(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const card = req.card;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AppError("Usuário não autenticado", 401);
+      }
+
+      // Incrementa o contador de likes
+      card.likes = Number(card.likes) + 1;
+      await card.save();
+
+      // Verifica se atingiu 20 likes
+      if (card.likes % 20 === 0) {
+        const user = await User.findById(card.userId);
+        if (user) {
+          user.orgPoints = Number(user.orgPoints) + 1;
+          await user.save();
+        }
+      }
+
+      res.status(200).json({
+        status: "success",
+        data: {
+          id: card._id,
+          title: card.title,
+          likes: card.likes,
+          userId: card.userId
+        },
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao dar like no cartão", 500);
     }
   }
 }
