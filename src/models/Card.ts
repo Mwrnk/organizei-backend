@@ -1,4 +1,3 @@
-import { List } from "./list";
 import mongoose, { Schema, Document } from "mongoose";
 
 interface ICard extends Document {
@@ -10,6 +9,7 @@ interface ICard extends Document {
   pdfs: IPdf[];
   likes: Number;
   comments: Number;
+  downloads: Number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +54,10 @@ const cardSchema = new Schema<ICard>(
       default: 0,
     },
     comments: {
+      type: Number,
+      default: 0,
+    },
+    downloads: {
       type: Number,
       default: 0,
     },
