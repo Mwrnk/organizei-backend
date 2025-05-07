@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { User } from "../models/User";
+import { User } from "../models/user";
 import { hash, compare } from "../utils/hashManager";
 import { generateToken } from "../utils/tokenManager";
 import { AppError } from "../middlewares/errorHandler";

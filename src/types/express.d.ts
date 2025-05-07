@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
-import { Card } from '../models/Card';
-import { List } from '../models/List';
+import { Card } from '../models/card';
+import { List } from '../models/list';
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;

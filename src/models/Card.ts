@@ -1,4 +1,4 @@
-import { List } from "./List";
+import { List } from "./list";
 import mongoose, { Schema, Document } from "mongoose";
 
 interface ICard extends Document {

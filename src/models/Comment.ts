@@ -1,4 +1,4 @@
-import { Card } from './Card';
+import { Card } from './card';
 import mongoose, { Schema, Document } from "mongoose";
 
 interface IComment extends Document {

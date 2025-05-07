@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Card } from "../models/Card"
+import { Card } from "../models/card"
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 

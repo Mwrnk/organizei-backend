@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { List } from "../models/List";
+import { List } from "../models/list";
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 
