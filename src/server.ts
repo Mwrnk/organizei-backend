@@ -8,6 +8,7 @@ import listRoutes from "./routes/listRoutes";
 import cardRoutes from "./routes/cardRoutes";
 import commentRoutes from "./routes/commentRoutes";
 import communityRoutes from "./routes/communityRoutes";
+import chatRoutes from "./routes/chatRoutes";
 
 import cron from "node-cron";
 import { checkExpiredPlansJob } from "./jobs/checkExpiredPlans";
@@ -26,6 +27,7 @@ app.use("/", listRoutes);
 app.use("/", cardRoutes);
 app.use("/", commentRoutes);
 app.use("/", communityRoutes);
+app.use("/", chatRoutes);
 
 // Middleware de tratamento de erros
 app.use(errorHandler);
