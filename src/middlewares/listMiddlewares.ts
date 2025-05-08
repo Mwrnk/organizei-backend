@@ -81,9 +81,10 @@ export const checkUserLists = async (
 
     const lists = await List.find({ userId });
 
-    if (lists.length === 0) {
-      throw new AppError("Nenhuma lista encontrada para este usuário", 404);
-    }
+    // if (lists.length === 0) {
+    //   throw new AppError("Nenhuma lista encontrada para este usuário", 404);
+    // }
+    //esse trecho crasha o backend quando usuario nao tem nenhuma lista
 
     req.lists = lists;
     next();
