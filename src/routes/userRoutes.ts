@@ -12,19 +12,15 @@ const router = Router();
 const userController = new UserController();
 
 // Rotas públicas
+router.get("/users", userController.getUsers);
 router.post("/signup", validateSignupData, userController.signup);
 router.post("/login", validateLoginData, userController.login);
-router.get("/users", userController.getUsers);
 
 // Rotas protegidas
 router.use(authMiddleware);
 
-// Rotas que precisam verificar se o usuário existe
 router.get("/users/:id", checkUserExists, userController.getUserById);
 router.patch("/users/:id", checkUserExists, validateUserData, userController.editUser);
-
-//FEITO POR MATHEUS RIBAS
-//ROTA PARA ADICIONAR A IMAGEM DO USUARIO 
 router.patch("/users/:id/image", checkUserExists, userController.uploadProfileImage);
 
 export default router;

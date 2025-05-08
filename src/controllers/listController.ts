@@ -4,6 +4,60 @@ import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 
 export class ListController {
+  async getLists(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const lists = await List.find();
+
+      res.status(200).json({
+        status: "success",
+        data: lists.map((list) => ({
+          id: list._id,
+          name: list.name,
+        })),
+      });
+    } catch (error) {
+      throw new AppError("Erro ao buscar listas", 500);
+    }
+  }
+
+  async getListById(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const list = await List.findById(id);
+
+      if (!list) {
+        throw new AppError("Lista não encontrada", 404);
+      }
+
+      res.status(200).json({
+        status: "success",
+        data: {
+          id: list._id,
+          name: list.name,
+        },
+      });
+    } catch (error) {
+      throw new AppError("Erro ao buscar lista", 500);
+    }
+  }
+
+  async getListByUserId(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const lists = await List.find({ userId });
+
+      res.status(200).json({
+        status: "success",
+        data: lists.map((list) => ({
+          id: list._id,
+          name: list.name,
+        })),
+      });
+    } catch (error) {
+      throw new AppError("Erro ao buscar listas do usuário", 500);
+    }
+  }
+
   async createList(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { name, userId } = req.body;
@@ -45,60 +99,6 @@ export class ListController {
       });
     } catch (error) {
       throw new AppError("Erro ao editar lista", 500);
-    }
-  }
-
-  async getListByUserId(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const { userId } = req.params;
-      const lists = await List.find({ userId });
-
-      res.status(200).json({
-        status: "success",
-        data: lists.map((list) => ({
-          id: list._id,
-          name: list.name,
-        })),
-      });
-    } catch (error) {
-      throw new AppError("Erro ao buscar listas do usuário", 500);
-    }
-  }
-
-  async getListById(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const list = await List.findById(id);
-
-      if (!list) {
-        throw new AppError("Lista não encontrada", 404);
-      }
-
-      res.status(200).json({
-        status: "success",
-        data: {
-          id: list._id,
-          name: list.name,
-        },
-      });
-    } catch (error) {
-      throw new AppError("Erro ao buscar lista", 500);
-    }
-  }
-
-  async getLists(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const lists = await List.find();
-
-      res.status(200).json({
-        status: "success",
-        data: lists.map((list) => ({
-          id: list._id,
-          name: list.name,
-        })),
-      });
-    } catch (error) {
-      throw new AppError("Erro ao buscar listas", 500);
     }
   }
 

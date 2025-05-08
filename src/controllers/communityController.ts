@@ -4,35 +4,6 @@ import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 
 export class CommunityController {
-  // Publicar um card na comunidade
-  async publishCard(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const card = req.card;
-
-      if (!card) {
-        throw new AppError("Cartão não encontrado", 404);
-      }
-
-      card.is_published = true;
-      await card.save();
-
-      res.status(200).json({
-        status: "success",
-        message: "Cartão publicado com sucesso!",
-        data: {
-          id: card._id,
-          title: card.title,
-          is_published: card.is_published
-        }
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError("Erro ao publicar cartão", 500);
-    }
-  }
-
   // Listar todos os cards publicados
   async getPublishedCards(req: AuthRequest, res: Response): Promise<void> {
     try {
@@ -60,6 +31,35 @@ export class CommunityController {
         throw error;
       }
       throw new AppError("Erro ao buscar os cards publicados", 500);
+    }
+  }
+
+  // Publicar um card na comunidade
+  async publishCard(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const card = req.card;
+
+      if (!card) {
+        throw new AppError("Cartão não encontrado", 404);
+      }
+
+      card.is_published = true;
+      await card.save();
+
+      res.status(200).json({
+        status: "success",
+        message: "Cartão publicado com sucesso!",
+        data: {
+          id: card._id,
+          title: card.title,
+          is_published: card.is_published
+        }
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao publicar cartão", 500);
     }
   }
 

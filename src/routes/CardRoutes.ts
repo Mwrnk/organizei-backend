@@ -17,12 +17,6 @@ router.use(authMiddleware);
 // Buscar todos os cards
 router.get("/cards", cardController.getAllCards);
 
-// Criar um novo card
-router.post("/cards", validateCardData, cardController.createCard);
-
-// Atualizar card
-router.patch("/cards/:id", checkCardById, validateCardUpdateData, cardController.editCard);
-
 // Buscar card por ID
 router.get("/cards/:id", checkCardById, cardController.getCardById);
 
@@ -32,10 +26,16 @@ router.get("/cards/title/:title", checkCardByTitle, cardController.getCardByTitl
 // Buscar cards por lista
 router.get("/lists/:listId/cards", cardController.getCardsByListId);
 
-// Deletar card
-router.delete("/cards/:id", checkCardById, cardController.deleteCard);
+// Criar um novo card
+router.post("/cards", validateCardData, cardController.createCard);
 
 // Dar like no card
 router.post("/cards/:id/like", checkCardById, cardController.likeCard);
+
+// Atualizar card
+router.patch("/cards/:id", checkCardById, validateCardUpdateData, cardController.editCard);
+
+// Deletar card
+router.delete("/cards/:id", checkCardById, cardController.deleteCard);
 
 export default router;
