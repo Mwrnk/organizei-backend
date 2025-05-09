@@ -10,7 +10,7 @@ export const chatWithAI = async (req: Request, res: Response) => {
   
     try {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // ou "gpt-3.5-turbo"
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: message }],
       });
   
