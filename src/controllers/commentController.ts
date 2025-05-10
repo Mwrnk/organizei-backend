@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Comment } from "../models/comment";
+import { Comment } from "../models/Comment";
 import { AppError } from "../middlewares/errorHandler";
 
 export class CommentController {
@@ -115,4 +115,22 @@ export class CommentController {
       }
     }
   }
+ async getAllComments(req: any, res: Response): Promise<void> {
+    try {
+      const comments = await Comment.find().populate("userId", "name email");
+
+      res.status(200).json({
+        status: "success",
+        data: comments,
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      } else {
+        throw new AppError("Erro ao buscar comentários", 500);
+      }
+    }
+  }
+
+
 }
