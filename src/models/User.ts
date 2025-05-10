@@ -60,7 +60,7 @@ const userSchema = new Schema(
       default: 0,
     },
     profileImage: {
-      type: String, 
+      type: String,
       default: null,
     },
     loginAttempts: {

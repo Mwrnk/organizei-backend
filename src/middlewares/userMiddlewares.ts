@@ -18,6 +18,35 @@ export const validateUserData = async (
       );
     }
 
+    // Validação do nome se fornecido
+    if (name) {
+      if (name.length < 3 || name.length > 50) {
+        throw new AppError("O nome deve ter entre 3 e 50 caracteres", 400);
+      }
+      if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(name)) {
+        throw new AppError("O nome deve conter apenas letras e espaços", 400);
+      }
+    }
+
+    // Validação da data de nascimento se fornecida
+    if (dateOfBirth) {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      
+      if (isNaN(birthDate.getTime())) {
+        throw new AppError("Data de nascimento inválida", 400);
+      }
+      
+      if (age < 10) {
+        throw new AppError("Você deve ter pelo menos 10 anos para se cadastrar", 400);
+      }
+      
+      if (age > 120) {
+        throw new AppError("Data de nascimento inválida", 400);
+      }
+    }
+
     next();
   } catch (error) {
     next(error);
@@ -36,9 +65,65 @@ export const validateSignupData = async (
       throw new AppError("Todos os campos são obrigatórios", 400);
     }
 
-    const existingUser = await User.findOne({ email });
+    // Validação do coduser
+    if (!/^[a-zA-Z0-9]{4,20}$/.test(coduser)) {
+      throw new AppError("O código do usuário deve ter entre 4 e 20 caracteres alfanuméricos", 400);
+    }
+
+    // Validação do nome
+    if (name.length < 3 || name.length > 50) {
+      throw new AppError("O nome deve ter entre 3 e 50 caracteres", 400);
+    }
+    if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(name)) {
+      throw new AppError("O nome deve conter apenas letras e espaços", 400);
+    }
+
+    // Validação do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new AppError("Email inválido", 400);
+    }
+
+    // Validação da senha
+    if (password.length < 8) {
+      throw new AppError("A senha deve ter pelo menos 8 caracteres", 400);
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      throw new AppError("A senha deve conter pelo menos uma letra maiúscula, uma minúscula e um número", 400);
+    }
+
+    // Validação da data de nascimento
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    
+    if (isNaN(birthDate.getTime())) {
+      throw new AppError("Data de nascimento inválida", 400);
+    }
+    
+    if (age < 13) {
+      throw new AppError("Você deve ter pelo menos 13 anos para se cadastrar", 400);
+    }
+    
+    if (age > 120) {
+      throw new AppError("Data de nascimento inválida", 400);
+    }
+
+    // Verificar se o usuário já existe
+    const existingUser = await User.findOne({ 
+      $or: [
+        { email },
+        { coduser }
+      ]
+    });
+    
     if (existingUser) {
-      throw new AppError("Usuário já existe", 400);
+      if (existingUser.email === email) {
+        throw new AppError("Este email já está em uso", 400);
+      }
+      if (existingUser.coduser === coduser) {
+        throw new AppError("Este código de usuário já está em uso", 400);
+      }
     }
 
     next();
@@ -57,6 +142,17 @@ export const validateLoginData = async (
 
     if (!email || !password) {
       throw new AppError("Email e senha são obrigatórios", 400);
+    }
+
+    // Validação do formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new AppError("Email inválido", 400);
+    }
+
+    // Validação básica da senha
+    if (password.length < 8) {
+      throw new AppError("Senha inválida", 400);
     }
 
     next();
