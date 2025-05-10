@@ -1,7 +1,7 @@
-import { Request } from 'express';
-import { JwtPayload } from 'jsonwebtoken';
-import { Card } from '../models/card';
-import { List } from '../models/list';
+import { Request } from "express";
+import { JwtPayload } from "jsonwebtoken";
+import { Card } from "../models/card";
+import { List } from "../models/list";
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;
@@ -19,4 +19,4 @@ declare global {
       lists?: List[];
     }
   }
-} 
+}

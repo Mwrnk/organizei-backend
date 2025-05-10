@@ -1,9 +1,9 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface IComment extends Document {
-  cardId: String;  
+  cardId: String;
   description: String;
-  userId: String; 
+  userId: String;
 }
 
 const commentSchema = new Schema<IComment>(
@@ -27,4 +27,4 @@ const commentSchema = new Schema<IComment>(
   { timestamps: true }
 );
 
-export const Comment = mongoose.model<IComment>("Comment", commentSchema);  
+export const Comment = mongoose.model<IComment>("Comment", commentSchema);
