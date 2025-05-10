@@ -3,7 +3,11 @@ import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
 import { verifyToken } from "../utils/tokenManager";
 
-export const authMiddleware = (  req: AuthRequest,res: Response, next: NextFunction) => {
+export const authMiddleware = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -11,9 +15,8 @@ export const authMiddleware = (  req: AuthRequest,res: Response, next: NextFunct
       throw new AppError("Token não fornecido", 401);
     }
 
-    
-//   const [token] = authHeader.split(' '); <- antes estava assim
-    let token = authHeader;  
+    //   const [token] = authHeader.split(' '); <- antes estava assim
+    let token = authHeader;
     // Se o header vier no formato "Bearer <token>", extrai só o token
     if (authHeader.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
