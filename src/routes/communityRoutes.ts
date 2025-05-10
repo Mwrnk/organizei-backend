@@ -7,29 +7,42 @@ import {
   checkCardIsPublished,
   checkCardOwnership
 } from "../middlewares/communityMiddlewares";
+import { AppError } from "../middlewares/errorHandler";
 
 const router = Router();
 const communityController = new CommunityController();
 
+// Middleware para validar parâmetros de rota
+const validateRouteParams = (req: any, res: any, next: any) => {
+  const { id } = req.params;
+
+  if (id && !id.match(/^[0-9a-fA-F]{24}$/)) {
+    throw new AppError("ID inválido", 400);
+  }
+
+  next();
+};
+
 // Aplicar autenticação em todas as rotas
 router.use(authMiddleware);
 
-// Publicar um card
+// Rotas de publicação
 router.post(
   "/publish/:id",
+  validateRouteParams,
   validatePublishData,
   checkCardExists,
   checkCardOwnership,
   communityController.publishCard
 );
 
-// Listar cards publicados
+// Rotas de visualização
 router.get("/cards", communityController.getPublishedCards);
 
-// Download de um card
+// Rotas de interação
 router.post(
   "/download/:id",
-  validatePublishData,
+  validateRouteParams,
   checkCardExists,
   checkCardIsPublished,
   communityController.downloadCard

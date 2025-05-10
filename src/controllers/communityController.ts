@@ -4,36 +4,6 @@ import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 
 export class CommunityController {
-  // Listar todos os cards publicados
-  async getPublishedCards(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const cards = await Card.find({ is_published: true })
-        .sort({ createdAt: -1 })
-        .populate({
-          path: "userId",
-          select: "name email"
-        });
-
-      res.status(200).json({
-        status: "success",
-        data: cards.map(card => ({
-          id: card._id,
-          title: card.title,
-          priority: card.priority,
-          downloads: card.downloads,
-          likes: card.likes,
-          comments: card.comments,
-          user: card.userId
-        }))
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError("Erro ao buscar os cards publicados", 500);
-    }
-  }
-
   // Publicar um card na comunidade
   async publishCard(req: AuthRequest, res: Response): Promise<void> {
     try {
@@ -52,14 +22,44 @@ export class CommunityController {
         data: {
           id: card._id,
           title: card.title,
-          is_published: card.is_published
-        }
+          is_published: card.is_published,
+        },
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
       throw new AppError("Erro ao publicar cartão", 500);
+    }
+  }
+
+  // Listar todos os cards publicados
+  async getPublishedCards(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const cards = await Card.find({ is_published: true })
+        .sort({ createdAt: -1 })
+        .populate({
+          path: "userId",
+          select: "name email",
+        });
+
+      res.status(200).json({
+        status: "success",
+        data: cards.map((card) => ({
+          id: card._id,
+          title: card.title,
+          priority: card.priority,
+          downloads: card.downloads,
+          likes: card.likes,
+          comments: card.comments,
+          user: card.userId,
+        })),
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao buscar os cards publicados", 500);
     }
   }
 
@@ -103,8 +103,8 @@ export class CommunityController {
             id: cardCopy._id,
             title: cardCopy.title,
             userId: cardCopy.userId,
-          }
-        }
+          },
+        },
       });
     } catch (error) {
       if (error instanceof AppError) {
