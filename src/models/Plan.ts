@@ -2,8 +2,8 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IPlan extends Document {
   name: string;
-  price: number; 
-  features: string[]; 
+  price: number;
+  features: string[];
   duration: number; // duração em dias
   isDefault: boolean;
   isActive: boolean;
@@ -35,7 +35,7 @@ const PlanSchema: Schema = new Schema({
   isActive: {
     type: Boolean,
     default: true,
-  }
+  },
 });
 
 export const Plan = mongoose.model<IPlan>("Plan", PlanSchema);

@@ -164,7 +164,7 @@ export class PlanController {
   }
 
   //FEITO POR MATHEUS RBAS
-  //BUSCANDO O PLANO ATUAL DO USUARIO 
+  //BUSCANDO O PLANO ATUAL DO USUARIO
   async getUserCurrentPlan(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
