@@ -6,36 +6,46 @@ import {
   validateCardUpdateData,
   checkCardById,
   checkCardByTitle,
+  checkCardOwnership,
+  checkCardIsPublished
 } from "../middlewares/cardMiddlewares";
+import { AppError } from "../middlewares/errorHandler";
 
 const router = Router();
 const cardController = new CardController();
 
+// Middleware para validar parâmetros de rota
+const validateRouteParams = (req: any, res: any, next: any) => {
+  const { id, listId, title } = req.params;
+
+  if (id && !id.match(/^[0-9a-fA-F]{24}$/)) {
+    throw new AppError("ID inválido", 400);
+  }
+
+  if (listId && !listId.match(/^[0-9a-fA-F]{24}$/)) {
+    throw new AppError("ID da lista inválido", 400);
+  }
+
+  if (title && (title.length < 3 || title.length > 100)) {
+    throw new AppError("Título inválido", 400);
+  }
+
+  next();
+};
+
 // Aplicar autenticação em todas as rotas
 router.use(authMiddleware);
 
-// Buscar todos os cards
+// Rotas de busca
 router.get("/cards", cardController.getAllCards);
+router.get("/cards/:id", validateRouteParams, checkCardById, cardController.getCardById);
+router.get("/cards/title/:title", validateRouteParams, checkCardByTitle, cardController.getCardByTitle);
+router.get("/lists/:listId/cards", validateRouteParams, cardController.getCardsByListId);
 
-// Buscar card por ID
-router.get("/cards/:id", checkCardById, cardController.getCardById);
-
-// Buscar card por título
-router.get("/cards/title/:title", checkCardByTitle, cardController.getCardByTitle);
-
-// Buscar cards por lista
-router.get("/lists/:listId/cards", cardController.getCardsByListId);
-
-// Criar um novo card
+// Rotas de manipulação
 router.post("/cards", validateCardData, cardController.createCard);
-
-// Dar like no card
-router.post("/cards/:id/like", checkCardById, cardController.likeCard);
-
-// Atualizar card
-router.patch("/cards/:id", checkCardById, validateCardUpdateData, cardController.editCard);
-
-// Deletar card
-router.delete("/cards/:id", checkCardById, cardController.deleteCard);
+router.post("/cards/:id/like", validateRouteParams, checkCardById, checkCardIsPublished, cardController.likeCard);
+router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
+router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
 
 export default router;
