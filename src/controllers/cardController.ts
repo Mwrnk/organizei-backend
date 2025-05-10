@@ -221,6 +221,31 @@ export class CardController {
     }
   }
 
+  async getCardsByUserId(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AppError("Usuário não autenticado", 401);
+      }
+
+      const cards = await Card.find({ userId })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "tipoId", // ou outro campo referenciado
+        select: "nome", // só traz os campos que você quer
+      });
+
+    res.status(200).json({
+      status: "success",
+      data: cards,
+    });
+  } catch (error) {
+    throw new AppError("Erro ao buscar cards do usuário", 500);
+  }
+}
+
+
   async deleteCard(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
