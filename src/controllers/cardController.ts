@@ -148,6 +148,23 @@ export class CardController {
         throw new AppError("Usuário não autenticado", 401);
       }
 
+      // Verifica se o usuário já deu like no card de forma segura
+      if (card.likedBy && card.likedBy.includes(userId)) {
+        res.status(400).json({
+          status: "fail",
+          message: "Você já curtiu este card"
+        });
+        return;
+      }
+
+      // Inicializa o array likedBy se não existir
+      if (!card.likedBy) {
+        card.likedBy = [];
+      }
+
+      // Adiciona o usuário à lista de likes
+      card.likedBy.push(userId);
+      
       // Incrementa o contador de likes
       card.likes = Number(card.likes) + 1;
       await card.save();
@@ -172,9 +189,16 @@ export class CardController {
       });
     } catch (error) {
       if (error instanceof AppError) {
-        throw error;
+        res.status(error.statusCode).json({
+          status: "fail",
+          message: error.message
+        });
+        return;
       }
-      throw new AppError("Erro ao dar like no cartão", 500);
+      res.status(500).json({
+        status: "error",
+        message: "Erro ao dar like no cartão"
+      });
     }
   }
 

@@ -11,6 +11,7 @@ interface ICard extends Document {
   likes: Number;
   comments: Number;
   downloads: Number;
+  likedBy: String[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,6 +60,10 @@ const cardSchema = new Schema<ICard>(
       type: Number,
       default: 0,
     },
+    likedBy: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }],
     comments: {
       type: Number,
       default: 0,
