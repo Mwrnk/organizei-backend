@@ -230,21 +230,20 @@ export class CardController {
       }
 
       const cards = await Card.find({ userId })
-      .sort({ createdAt: -1 })
-      .populate({
-        path: "tipoId", // ou outro campo referenciado
-        select: "nome", // só traz os campos que você quer
+        .sort({ createdAt: -1 })
+        .populate({
+          path: "tipoId", // ou outro campo referenciado
+          select: "nome", // só traz os campos que você quer
+        });
+
+      res.status(200).json({
+        status: "success",
+        data: cards,
       });
-
-    res.status(200).json({
-      status: "success",
-      data: cards,
-    });
-  } catch (error) {
-    throw new AppError("Erro ao buscar cards do usuário", 500);
+    } catch (error) {
+      throw new AppError("Erro ao buscar cards do usuário", 500);
+    }
   }
-}
-
 
   async deleteCard(req: AuthRequest, res: Response): Promise<void> {
     try {

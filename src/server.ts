@@ -26,7 +26,7 @@ app.use("/", planRoutes);
 app.use("/", listRoutes);
 app.use("/", cardRoutes);
 app.use("/", commentRoutes);
-app.use("/", communityRoutes);
+app.use("/comunidade", communityRoutes);
 app.use("/", chatRoutes);
 
 // Middleware de tratamento de erros
@@ -47,7 +47,7 @@ app.get("/", (req, res) => {
 });
 
 // Porta
-const PORT = process.env.PORT || 3000; 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
