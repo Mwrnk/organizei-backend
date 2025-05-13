@@ -53,7 +53,7 @@ const userSchema = new Schema(
     plan: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Plan",
-      default: null,
+      default: '68168764017ef3afb4b2ef30',
     },
     orgPoints: {
       type: Number,

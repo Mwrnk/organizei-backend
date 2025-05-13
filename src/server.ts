@@ -26,7 +26,7 @@ app.use("/", planRoutes);
 app.use("/", listRoutes);
 app.use("/", cardRoutes);
 app.use("/", commentRoutes);
-app.use("/comunidade", communityRoutes);
+app.use("/", communityRoutes);
 app.use("/", chatRoutes);
 
 // Middleware de tratamento de erros
