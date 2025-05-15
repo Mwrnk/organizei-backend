@@ -2,12 +2,16 @@ import { Request } from "express";
 import { JwtPayload } from "jsonwebtoken";
 import { Card } from "../models/card";
 import { List } from "../models/list";
+import { Flashcard, Tag } from "../models/Flashcard";
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;
   card?: Card;
   list?: List;
   lists?: List[];
+  flashcard?: Flashcard;
+  tag?: Tag;
+  tags?: Tag[];
 }
 
 declare global {
@@ -17,6 +21,9 @@ declare global {
       card?: Card;
       list?: List;
       lists?: List[];
+      flashcard?: Flashcard;
+      tag?: Tag;
+      tags?: Tag[];
     }
   }
 }

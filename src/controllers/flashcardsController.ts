@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 import { Response } from "express";
 import { AuthRequest } from "../types/express";
 import { AppError } from "../middlewares/errorHandler";
-import { Flashcard, IFlashcard, IReviewLog } from "../models/Flashcard";
-import { generateFlashcardPrompt, context } from "../prompts/generateFlashcardPrompt";
+import { Flashcard, IFlashcard, IReviewLog, IScheduling, Tag } from "../models/Flashcard";
+import { generateFlashcardPrompt, context, model, temperature } from "../prompts/generateFlashcardPrompt";
 
 dotenv.config();
 
@@ -44,7 +44,7 @@ export class FlashcardsController {
             }
             throw new AppError("Erro ao criar flashcard", 500);
         }
-    }
+    };
 
     createFlashcardWithAI = async (req: AuthRequest, res: Response): Promise<void> => {
         try {
@@ -60,32 +60,21 @@ export class FlashcardsController {
 
             const existingFronts = flashcards.map(flashcard => flashcard.front);
 
-            const completion = await this.clientOpenAI.chat.completions.create({
-                model: "gpt-4o-mini",
-                messages: [
-                    {
-                        role: "system",
-                        content: context
-                    },
-                    {
-                        role: "user",
-                        content: generateFlashcardPrompt(amount, card.title.toString(), existingFronts)
-                    }
-                ],
-                "temperature": 0.5
-            });
+            const availableTags = await Tag.find();
 
-            if(!completion.choices[0].message.content){
-                throw new AppError("tenta de novo", 500);
-            }
+            const prompt = generateFlashcardPrompt(
+                amount, card.title.toString(), 
+                existingFronts, 
+                availableTags.map(tag => tag.name)
+            );
 
-            const convertedResults = JSON.parse(completion.choices[0].message.content);
+            const resultGpt = await this.generateFlashCardsWithAI(prompt);
 
-            const newFlashcards = convertedResults.map(
-                (flashcard: [{front: string, back: string }]) => 
-                    ({ ...flashcard, cardId: card.id, userId }));
+            const convertedResults = JSON.parse(resultGpt);
 
-            const insertedFlashcards = await Flashcard.insertMany(newFlashcards);
+            const preparedFlashcards = await this.prepareFlashcards(convertedResults, card.id, userId);
+
+            const insertedFlashcards = await Flashcard.insertMany(preparedFlashcards);
 
             res.status(200).json({
                 status: "success",
@@ -97,7 +86,7 @@ export class FlashcardsController {
             console.error("Erro ao se comunicar com a OpenAI:", error.message);
             res.status(500).json({ error: error.message || "Erro desconhecido" });
         }
-    }
+    };
 
     getAllFlashcards = async (req: AuthRequest, res: Response): Promise<void> => {
         try {
@@ -108,7 +97,10 @@ export class FlashcardsController {
             }
 
             const flashcards = await Flashcard.find({ userId })
-                .sort({ createdAt: -1 });
+                .sort({ createdAt: -1 })
+                .populate({
+                    path: "tags"
+                });
 
             res.status(200).json({
                 status: "success",
@@ -121,7 +113,7 @@ export class FlashcardsController {
             }
             throw new AppError("Erro buscar flashcards", 500);
         }
-    }
+    };
 
     getFlashcardById = async (req: AuthRequest, res: Response): Promise<void> => {
         try {
@@ -139,7 +131,7 @@ export class FlashcardsController {
             }
             throw new AppError("Erro buscar flashcards", 500);
         }
-    }
+    };
 
     getlFlashcardsByCard = async (req: AuthRequest, res: Response): Promise<void> => {
         try {
@@ -150,7 +142,10 @@ export class FlashcardsController {
                 throw new AppError("Usuário não autenticado", 401);
             }
 
-            const flashcards = await Flashcard.find({ cardId: cardId });
+            const flashcards = await Flashcard.find({ cardId: cardId })
+                .populate({
+                    path: "tags"
+                });
 
             res.status(200).json({
                 status: "success",
@@ -162,7 +157,7 @@ export class FlashcardsController {
             }
             throw new AppError("Erro ao buscar cartões da lista", 500);
         }
-    }
+    };
 
     deteleFlashcard = async (req: AuthRequest, res: Response): Promise<void> => {
         const userId = req.user?.id;
@@ -175,7 +170,7 @@ export class FlashcardsController {
         await Flashcard.findByIdAndDelete(flashcard.id);
 
         res.status(204).send();
-    }
+    };
 
     editFlashcard = async (req: AuthRequest, res: Response): Promise<void> => {
         try {
@@ -209,7 +204,7 @@ export class FlashcardsController {
             }
             throw new AppError("Erro ao atualizar o flashcard", 500);
         }
-    }
+    };
 
     startReview = async (req: AuthRequest, res: Response): Promise<void> => {
         try {
@@ -225,6 +220,9 @@ export class FlashcardsController {
                 "scheduling.nextReview": {
                     $lt: new Date(new Date().setHours(23, 59, 59, 999)),
                 }
+            })
+            .populate({
+                path: "tags"
             });
 
             res.status(200).json({
@@ -237,7 +235,7 @@ export class FlashcardsController {
             }
             throw new AppError("Erro ao buscar cartões da lista", 500);
         }
-    }
+    };
 
     handleReview = async (req: AuthRequest, res: Response): Promise<void> => {
         const userId = req.user?.id;
@@ -248,10 +246,12 @@ export class FlashcardsController {
             throw new AppError("Usuário não autenticado", 401);
         }
 
-        const flashcardUpdated = this.updateScheduling(flashcard, grade);
+        flashcard.scheduling = this.updateScheduling(flashcard.scheduling, grade);
+
+        flashcard.reviewLog.push(this.createReviewLog(grade));
         
-        flashcardUpdated.markModified('scheduling')
-        const updatedFlashcard =  await flashcardUpdated.save();
+        flashcard.markModified('scheduling')
+        const updatedFlashcard =  await flashcard.save();
 
         res.status(201).json({
             status: "success",
@@ -259,56 +259,123 @@ export class FlashcardsController {
                 flashcard: updatedFlashcard
             }
         });
-    }
+    };
 
-    private updateScheduling = (flashcard: IFlashcard, grade: number): IFlashcard => {
+    private updateScheduling = (scheduling: IScheduling, grade: number): IScheduling => {
+        const now = new Date();
+        let { repetitions, interval, easeFactor, nextReview } = scheduling;
+
         if(grade >= 3){
-            flashcard.scheduling.repetitions += 1;
+            repetitions += 1;
+            interval = this.defineInterval(repetitions, interval, easeFactor);
+        }else{
+            repetitions = 0;
+            interval = 1;
+        }
 
-            if(flashcard.scheduling.repetitions == 1){
-                flashcard.scheduling.interval = 1;
-            }
+        easeFactor = Math.max(this.calcEaseFactor(easeFactor, grade)), 1.3; // 1.3 valor mínimo no algoritmo SM-2
 
-            if(flashcard.scheduling.repetitions == 2){
-                flashcard.scheduling.interval = 6;
-            }
+        nextReview.setDate(now.getDate() + interval);
 
-            if(flashcard.scheduling.repetitions == 3){
-                flashcard.scheduling.interval = Math.round(flashcard.scheduling.interval * flashcard.scheduling.easeFactor);
+        const updatedScheduling: IScheduling = {
+            repetitions,
+            interval,
+            easeFactor,
+            lastReview: now,
+            nextReview
+        };
+
+        return updatedScheduling;
+    };
+
+    private defineInterval = (
+        repetitions: number, 
+        interval: number, 
+        easeFactor: number
+    ): number => {
+        switch(repetitions) {
+            case 1: interval = 1; break;
+            case 2:  interval = 6; break;
+            default:  {
+                interval = 
+                    Math.round(interval * easeFactor);
+                break;
             }
         }
 
-        if(grade < 3){
-            flashcard.scheduling.repetitions = 0;
-            flashcard.scheduling.interval = 1;
-        }
+        return interval;
+    };
 
-        const easeFactor = flashcard.scheduling.easeFactor + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+    private calcEaseFactor = (easeFactor: number, grade: number): number => {
+        return easeFactor + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+    };
 
-        flashcard.scheduling.easeFactor = easeFactor >= 1.3 ? easeFactor : 1.3; // 1.3 valor mínimo no algoritmo SM-2
-
-        const lastReview = new Date();
-
-        flashcard.scheduling.lastReview = lastReview;
-
-        const test = flashcard.scheduling.nextReview.setDate(lastReview.getDate() + flashcard.scheduling.interval);
-
-        flashcard.scheduling.nextReview = new Date(test);
-
-        console.log("ERA PRA DAR CERTO: ", flashcard.scheduling.nextReview);
-
-        const testDate = new Date(test);
-
-        console.log("TESTE: ", testDate);
-
-        const reviewLog: IReviewLog = {
-            reviewDate: new Date(),
+    private createReviewLog = (grade: number): IReviewLog => {
+        return {
+            reviewDate: new Date,
             grade,
             responseTimeInSeconds: 0
         };
+    };
 
-        flashcard.reviewLogs.push(reviewLog);
+    private generateFlashCardsWithAI = async (prompt: string): Promise<string> => {
+        const completion = await this.clientOpenAI.chat.completions.create({
+            model: model,
+            messages: [ 
+                {
+                    role: "system",
+                    content: context
+                },
+                {
+                    role: "user",
+                    content: prompt
+                }
+            ],
+            "temperature": temperature,
+        });
 
-        return flashcard;
-    }
+        if(!completion.choices[0].message.content){
+                throw new AppError("Nenhuma resposta da OpenAI", 500);
+        }
+
+        return completion.choices[0].message.content;
+    };
+
+    private prepareFlashcards = async (
+        flashcardsGenerated: 
+            [{ front: string, back: string, tags: string[] }],
+            cardId: string,
+            userId: string 
+        ) => {
+        const tagNames = flashcardsGenerated.flatMap(flashcard =>
+            flashcard.tags.map(tag => tag.toLowerCase().trim())
+        );
+
+        const existingTags = await Tag.find({ name: { $in: tagNames } });
+
+        const existingMap = new Map(existingTags.map(tag => [tag.name, tag._id]));
+
+        const newTagsToCreate = tagNames.filter((name: string) => !existingMap.has(name));
+
+        const createdTags = await Tag.insertMany(newTagsToCreate.map((name: string) => ({ name })));
+
+        const createdMap = new Map(createdTags.map(tag => [tag.name, tag._id]));
+
+        const allTagsMap = new Map([ ...existingMap, ...createdMap ]);
+
+        const newFlashcards = flashcardsGenerated.map(
+            (flashcard: { front: string, back: string, tags: string[] }) => ({
+                front: flashcard.front,
+                back: flashcard.back,
+                cardId,
+                userId,
+                tags: flashcard.tags
+                    .map(tag => tag.toLowerCase().trim())
+                    .map(tag => allTagsMap.get(tag))
+                    .filter(Boolean),
+            })
+        );
+
+        return newFlashcards;
+    };
 }

@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
-import { Flashcard } from "../models/Flashcard";
+import { Flashcard, Tag } from "../models/Flashcard";
 import { Card } from "../models/card";
 
 export const checkFlashcardById = async (
@@ -16,7 +16,10 @@ export const checkFlashcardById = async (
             throw new AppError("ID inválido", 400);
         }
 
-        const flashcard = await Flashcard.findById(id);
+        const flashcard = await Flashcard.findById(id)
+            .populate({
+                path: "tags"
+            });
 
         if  (!flashcard) {
             throw new AppError("Flashcard não encontrado", 404);
@@ -108,6 +111,20 @@ export const validateFlashcardData = async (
             throw new AppError("O array de tags esta vazio", 400);
         }
 
+        const tagsIds = tags.map((tagId: string) => {
+            if (!tagId.match(/^[0-9a-fA-F]{24}$/)) {
+                throw new AppError("ID de uma tag é inválido", 400);
+            }
+
+            return tagId;
+        });
+
+        const foundedTags = await Tag.find({ _id: { $in: tagsIds } });
+
+        if(foundedTags.length === 0){
+            throw new AppError("Nenhuma tag encontrada", 404);
+        }
+
         if (!cardId.match(/^[0-9a-fA-F]{24}$/)) {
             throw new AppError("ID do card é inválido", 400);
         }
@@ -117,8 +134,6 @@ export const validateFlashcardData = async (
         if(!card){
             throw new AppError("Card não encontrado", 404);
         }
-
-        req.card = card;
 
         next();
     } catch (error) {

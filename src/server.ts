@@ -4,11 +4,13 @@ import connectDB from "./config/database";
 import { errorHandler } from "./middlewares/errorHandler";
 import userRoutes from "./routes/userRoutes";
 import planRoutes from "./routes/planRoutes";
-import listRoutes from "./routes/listRoutes";
-import cardRoutes from "./routes/cardRoutes";
+import listRoutes from "./routes/ListRoutes";
+import cardRoutes from "./routes/CardRoutes";
 import commentRoutes from "./routes/commentRoutes";
 import communityRoutes from "./routes/communityRoutes";
 import chatRoutes from "./routes/chatRoutes";
+import flashcardRouter from "./routes/FlashcardRoute";
+import tagRouter from "./routes/TagRoute";
 
 import cron from "node-cron";
 import { checkExpiredPlansJob } from "./jobs/checkExpiredPlans";
@@ -26,8 +28,10 @@ app.use("/", planRoutes);
 app.use("/", listRoutes);
 app.use("/", cardRoutes);
 app.use("/", commentRoutes);
-app.use("/", communityRoutes);
+app.use("/comunidade", communityRoutes);
 app.use("/", chatRoutes);
+app.use("/", flashcardRouter);
+app.use("/", tagRouter);
 
 // Middleware de tratamento de erros
 app.use(errorHandler);

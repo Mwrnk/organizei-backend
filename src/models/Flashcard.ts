@@ -6,13 +6,13 @@ export interface IFlashcard extends Document {
     front: string;
     back: string;
     scheduling: IScheduling;
-    tags: string[];
+    tags: mongoose.Schema.Types.ObjectId[];
     reviewLogs: IReviewLog[]
     createdAt: Date;
     updatedAt: Date;
 }
 
-interface IScheduling {
+export interface IScheduling {
     nextReview: Date;
     lastReview: Date;
     repetitions: number;
@@ -24,6 +24,10 @@ export interface IReviewLog {
     reviewDate: Date;
     grade: number;
     responseTimeInSeconds: number;
+}
+
+interface ITag extends Document{
+    name: string
 }
 
 const flashcardSchema = new Schema<IFlashcard>(
@@ -70,11 +74,12 @@ const flashcardSchema = new Schema<IFlashcard>(
                 default: 2.5// valor padrão no algortimo SM-2
             },
         },
-        tags: {
-            type: [String],
-            required: [true, "Deve haver pelo menos uma tag"],
-            trim: true
-        },
+        tags: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Tag",
+            }
+        ],
         reviewLogs: [
             {
                 reviewDate: {
@@ -93,4 +98,15 @@ const flashcardSchema = new Schema<IFlashcard>(
         ],
     }
 );
+
+const tagSchema = new Schema<ITag>(
+    {
+        name: {
+            type: String,
+            required: [true, "Nome da tag é obrigatório"],
+            trim: true,
+        }
+    }
+);
 export const Flashcard = mongoose.model<IFlashcard>("Flashcard", flashcardSchema);
+export const Tag = mongoose.model<ITag>("Tag", tagSchema);
