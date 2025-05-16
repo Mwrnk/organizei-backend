@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import connectDB from "./config/database";
 import { errorHandler } from "./middlewares/errorHandler";
@@ -11,7 +11,7 @@ import communityRoutes from "./routes/communityRoutes";
 import chatRoutes from "./routes/chatRoutes";
 import flashcardRouter from "./routes/FlashcardRoute";
 import tagRouter from "./routes/TagRoute";
-
+import path from "path";
 import cron from "node-cron";
 import { checkExpiredPlansJob } from "./jobs/checkExpiredPlans";
 
@@ -21,6 +21,9 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Servir arquivos estáticos da pasta uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Rotas
 app.use("/", userRoutes);
@@ -46,7 +49,7 @@ cron.schedule("0 0 * * *", () => {
 });
 
 // Rota simples de status
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
   res.send("A API está online");
 });
 
