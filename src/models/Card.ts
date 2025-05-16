@@ -1,6 +1,14 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-interface ICard extends Document {
+export interface IComment extends Document {
+  _id: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+  text: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ICard extends Document {
   listId: String;
   userId: String;
   title: String;
@@ -9,18 +17,43 @@ interface ICard extends Document {
   image_url: String[];
   pdfs: IPdf[];
   likes: Number;
-  comments: Number;
+  comments: IComment[];
   downloads: Number;
   likedBy: String[];
   createdAt: Date;
   updatedAt: Date;
+  content: String;
 }
-interface IPdf {
+
+export interface IPdf {
   url: string;
   filename: string;
   uploaded_at: Date;
   size_kb?: number;
 }
+
+const commentSchema = new Schema<IComment>({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
+  text: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+}, {
+  timestamps: true
+});
 
 const cardSchema = new Schema<ICard>(
   {
@@ -52,10 +85,12 @@ const cardSchema = new Schema<ICard>(
       type: [String],
       default: null,
     },
-    pdfs: {
-      type: [Object],
-      default: null,
-    },
+    pdfs: [{
+      url: String,
+      filename: String,
+      uploaded_at: Date,
+      size_kb: Number
+    }],
     likes: {
       type: Number,
       default: 0,
@@ -64,10 +99,7 @@ const cardSchema = new Schema<ICard>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
     }],
-    comments: {
-      type: Number,
-      default: 0,
-    },
+    comments: [commentSchema],
     downloads: {
       type: Number,
       default: 0,
@@ -79,6 +111,10 @@ const cardSchema = new Schema<ICard>(
     updatedAt: {
       type: Date,
       default: Date.now,
+    },
+    content: {
+      type: String,
+      default: '',
     },
   },
   {
