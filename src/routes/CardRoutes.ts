@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { CardController } from "../controllers/cardController";
+import { CardController, upload } from "../controllers/cardController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import {
   validateCardData,
@@ -46,6 +46,7 @@ router.get('/cards/user/:userId', validateRouteParams, cardController.getCardsBy
 // Rotas de manipulação
 router.post("/cards", validateCardData, cardController.createCard);
 router.post("/cards/:id/like", validateRouteParams, checkCardById, checkCardIsPublished, cardController.likeCard);
+router.post("/cards/:id/files", validateRouteParams, checkCardById, checkCardOwnership, upload.array('files', 5), cardController.uploadFiles);
 router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
 router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
 
