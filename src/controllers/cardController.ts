@@ -2,7 +2,7 @@ import { Response } from "express";
 import { Card } from "../models/card";
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
-import { User } from "../models/user";
+import { User } from "../models/User";
 
 export class CardController {
   async getAllCards(req: AuthRequest, res: Response): Promise<void> {
