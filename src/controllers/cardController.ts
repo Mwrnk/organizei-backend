@@ -398,7 +398,15 @@ export class CardController {
           card: {
             id: card._id,
             title: card.title,
-            is_published: card.is_published
+            content: card.content,
+            priority: card.priority,
+            is_published: card.is_published,
+            listId: card.listId,
+            userId: card.userId,
+            likes: card.likes,
+            downloads: card.downloads,
+            createdAt: card.createdAt,
+            updatedAt: card.updatedAt
           }
         }
       });

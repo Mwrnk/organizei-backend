@@ -9,20 +9,20 @@ export interface IComment extends Document {
 }
 
 export interface ICard extends Document {
-  listId: String;
-  userId: String;
-  title: String;
-  priority: String;
-  is_published: Boolean;
-  image_url: String[];
+  listId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+  title: string;
+  priority: string;
+  is_published: boolean;
+  image_url: string[];
   pdfs: IPdf[];
-  likes: Number;
+  likes: number;
   comments: IComment[];
-  downloads: Number;
-  likedBy: String[];
+  downloads: number;
+  likedBy: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
-  content: String;
+  content: string;
 }
 
 export interface IPdf {
