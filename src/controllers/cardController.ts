@@ -310,58 +310,6 @@ export class CardController {
       });
     } catch (error) {
       if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError("Erro ao dar like no cartão", 500);
-    }
-  }
-
-  async unlikeCard(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const card = req.card;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
-      }
-
-      // Verifica se o card está publicado
-      if (!card.is_published) {
-        throw new AppError("Este card não está disponível para interações", 403);
-      }
-
-      // Verifica se o usuário está tentando descurtir seu próprio card
-      if (card.userId.toString() === userId) {
-        throw new AppError("Você não pode descurtir seu próprio card", 403);
-      }
-
-      // Verifica se o usuário já deu like no card
-      if (!card.likedBy || !card.likedBy.includes(userId)) {
-        res.status(400).json({
-          status: "fail",
-          message: "Você ainda não curtiu este card"
-        });
-        return;
-      }
-
-      // Remove o usuário da lista de likes
-      card.likedBy = card.likedBy.filter((id: string | number) => id.toString() !== userId);
-      
-      // Decrementa o contador de likes
-      card.likes = Math.max(0, Number(card.likes) - 1);
-      await card.save();
-
-      res.status(200).json({
-        status: "success",
-        data: {
-          id: card._id,
-          title: card.title,
-          likes: card.likes,
-          userId: card.userId,
-        },
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
         res.status(error.statusCode).json({
           status: "fail",
           message: error.message
