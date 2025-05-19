@@ -3,7 +3,6 @@ import { Card, IComment } from "../models/card";
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 import { User } from "../models/User";
-import { User } from "../models/User";
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
