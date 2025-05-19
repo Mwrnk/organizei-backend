@@ -46,6 +46,7 @@ router.get('/cards/user/:userId', validateRouteParams, cardController.getCardsBy
 // Rotas de manipulação
 router.post("/cards", validateCardData, cardController.createCard);
 router.post("/cards/:id/like", validateRouteParams, checkCardById, checkCardIsPublished, cardController.likeCard);
+router.post("/cards/:id/unlike", validateRouteParams, checkCardById, checkCardIsPublished, cardController.unlikeCard);
 router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
 router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
 

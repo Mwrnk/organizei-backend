@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
-import { Flashcard } from "../models/Flashcard";
+import { Flashcard } from "../models/flashcard";
 import { Card } from "../models/card";
 
 export const checkFlashcardById = async (
