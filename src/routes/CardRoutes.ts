@@ -47,11 +47,9 @@ router.get('/cards/user/:userId', validateRouteParams, cardController.getCardsBy
 // Rotas de manipulação
 router.post("/cards", validateCardData, cardController.createCard);
 router.post("/cards/:id/like", validateRouteParams, checkCardById, checkCardIsPublished, cardController.likeCard);
-<<<<<<< HEAD
 router.post("/cards/:id/unlike", validateRouteParams, checkCardById, checkCardIsPublished, cardController.unlikeCard);
-=======
+
 router.post("/cards/:id/files", validateRouteParams, checkCardById, checkCardOwnership, upload.array('files', 5) as any, cardController.uploadFiles);
->>>>>>> 2c0957f9f6dd68dbdba614248fb6f3535939f59a
 router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
 router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
 

@@ -3,13 +3,9 @@ import dotenv from "dotenv";
 import { Response } from "express";
 import { AuthRequest } from "../types/express";
 import { AppError } from "../middlewares/errorHandler";
-<<<<<<< HEAD
-import { Flashcard, IFlashcard, IReviewLog } from "../models/flashcard";
-import { generateFlashcardPrompt, context } from "../prompts/generateFlashcardPrompt";
-=======
 import { Flashcard, IFlashcard, IReviewLog, IScheduling, Tag } from "../models/Flashcard";
 import { generateFlashcardPrompt, context, model, temperature } from "../prompts/generateFlashcardPrompt";
->>>>>>> 2c0957f9f6dd68dbdba614248fb6f3535939f59a
+
 
 dotenv.config();
 

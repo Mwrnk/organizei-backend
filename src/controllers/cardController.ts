@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Card, IComment } from "../models/card";
+import { Card, IComment } from "../models/Card";
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 import { User } from "../models/User";
