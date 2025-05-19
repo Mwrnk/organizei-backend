@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { CardController } from "../controllers/cardController";
+import { CardController, upload } from "../controllers/cardController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import {
   validateCardData,
@@ -10,12 +10,13 @@ import {
   checkCardIsPublished
 } from "../middlewares/cardMiddlewares";
 import { AppError } from "../middlewares/errorHandler";
+import { Request, Response, NextFunction } from "express";
 
 const router = Router();
 const cardController = new CardController();
 
 // Middleware para validar parâmetros de rota
-const validateRouteParams = (req: any, res: any, next: any) => {
+const validateRouteParams = (req: Request, res: Response, next: NextFunction) => {
   const { id, listId, title } = req.params;
 
   if (id && !id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -46,7 +47,11 @@ router.get('/cards/user/:userId', validateRouteParams, cardController.getCardsBy
 // Rotas de manipulação
 router.post("/cards", validateCardData, cardController.createCard);
 router.post("/cards/:id/like", validateRouteParams, checkCardById, checkCardIsPublished, cardController.likeCard);
+<<<<<<< HEAD
 router.post("/cards/:id/unlike", validateRouteParams, checkCardById, checkCardIsPublished, cardController.unlikeCard);
+=======
+router.post("/cards/:id/files", validateRouteParams, checkCardById, checkCardOwnership, upload.array('files', 5) as any, cardController.uploadFiles);
+>>>>>>> 2c0957f9f6dd68dbdba614248fb6f3535939f59a
 router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
 router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
 

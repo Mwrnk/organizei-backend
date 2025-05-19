@@ -6,7 +6,7 @@ import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 
 export class UserController {
-  async uploadProfileImage(req: AuthRequest, res: Response): Promise<void> {
+  async uploadProfileImage(req:AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const { image } = req.body;

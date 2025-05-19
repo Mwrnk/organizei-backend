@@ -1,8 +1,8 @@
 import { Response } from "express";
 import { AppError } from "../middlewares/errorHandler";
-import { Plan } from "../models/plan";
-import { User } from "../models/user";
-import { PlanHistory } from "../models/planHistory";
+import { Plan } from "../models/Plan";
+import { User } from "../models/User";
+import { PlanHistory } from "../models/PlanHistory";
 import { AuthRequest } from "../types/express";
 import mongoose from "mongoose";
 

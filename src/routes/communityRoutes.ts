@@ -37,7 +37,7 @@ router.post(
 );
 
 // Rotas de visualização
-router.get("/community/cards", communityController.getPublishedCards);
+router.get("/cards", communityController.getPublishedCards);
 
 // Rotas de interação
 router.post(

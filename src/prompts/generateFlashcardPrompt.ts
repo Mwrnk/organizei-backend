@@ -1,10 +1,15 @@
 
-export const context: string = "Você é um gerador de flashcards com base nos princípios de repetição espaçada, active recall e teoria da codificação dual.";
+export const model = "gpt-4o-mini";
+
+export const temperature = 0.5;
+
+export const context = "Você é um gerador de flashcards com base nos princípios de repetição espaçada, active recall e teoria da codificação dual.";
 
 export const generateFlashcardPrompt = (
     amount: number, 
     subject: string, 
-    existingFronts: string[]
+    existingFronts: string[],
+    availableTags: string[]
 ): string => {
     return `
 Receba um tema e gere flashcards de forma clara, diversa e focada em revisão de conteúdo.
@@ -24,7 +29,10 @@ Receba um tema e gere flashcards de forma clara, diversa e focada em revisão de
 5. Cada flashcard deve conter:
 - "front": uma pergunta curta e direta
 - "back": a resposta detalhada e clara
-- "tags": lista de termos relacionados ao conteúdo (pelo menos 1)
+- "tags": um array de nomes de tags (strings) relacionados ao assunto.
+escolha **prioritariamente entre estas** tags já existentes no sistema:
+${availableTags.map(tag => `- ${tag}`).join('\n')}
+Caso necessário ou não exista nenhuma tag na lista acima, **você pode criar novas tags**, mas evite repetir ideias já representadas pelas existentes. As tags devem ser genéricas, reutilizáveis e descritivas.
 
 ### Formato da resposta (JSON):
 [
@@ -37,4 +45,4 @@ Receba um tema e gere flashcards de forma clara, diversa e focada em revisão de
 ]
 Apenas envie a lista JSON, sem nenhuma explicação ou comentário adicional.
     `
-}
+};
