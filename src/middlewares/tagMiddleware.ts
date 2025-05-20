@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
-import { Tag } from "../models/Flashcard";
+import { Tag } from "../models/flashcard";
 
 export const validateTagData = (
     req: AuthRequest,

@@ -1,9 +1,9 @@
 import { NextFunction, Response } from "express";
 import { List } from "../models/list";
-import { User } from "../models/User";
+import { User } from "../models/user";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
-import { IPlan } from "../models/Plan";
+import { IPlan } from "../models/plan";
 
 // Validação dos dados básicos da lista
 export const validateListData = async (

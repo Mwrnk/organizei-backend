@@ -1,11 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
-<<<<<<< HEAD
-import { Flashcard } from "../models/flashcard";
-=======
-import { Flashcard, Tag } from "../models/Flashcard";
->>>>>>> 2c0957f9f6dd68dbdba614248fb6f3535939f59a
+import { Flashcard, Tag } from "../models/flashcard";
 import { Card } from "../models/card";
 
 export const checkFlashcardById = async (

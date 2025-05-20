@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Tag } from "../models/Flashcard";
+import { Tag } from "../models/flashcard";
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 

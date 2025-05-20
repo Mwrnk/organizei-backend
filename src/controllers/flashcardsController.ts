@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { Response } from "express";
 import { AuthRequest } from "../types/express";
 import { AppError } from "../middlewares/errorHandler";
-import { Flashcard, IFlashcard, IReviewLog, IScheduling, Tag } from "../models/Flashcard";
+import { Flashcard, IFlashcard, IReviewLog, IScheduling, Tag } from "../models/flashcard";
 import { generateFlashcardPrompt, context, model, temperature } from "../prompts/generateFlashcardPrompt";
 
 

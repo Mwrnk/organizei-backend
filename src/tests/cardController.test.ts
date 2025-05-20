@@ -2,7 +2,7 @@ import request from 'supertest';
 import mongoose from 'mongoose';
 import { app } from '../app';
 import { Card } from '../models/card';
-import { User } from '../models/User';
+import { User } from '../models/user';
 import jwt from 'jsonwebtoken';
 
 describe('CardController', () => {

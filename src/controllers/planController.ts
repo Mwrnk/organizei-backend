@@ -1,43 +1,12 @@
 import { Response } from "express";
 import { AppError } from "../middlewares/errorHandler";
-import { Plan } from "../models/Plan";
-import { User } from "../models/User";
-import { PlanHistory } from "../models/PlanHistory";
+import { Plan } from "../models/plan";
+import { User } from "../models/user";
+import { PlanHistory } from "../models/planHistory";
 import { AuthRequest } from "../types/express";
 import mongoose from "mongoose";
 
 export class PlanController {
-  async createPlan(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const { name, price, features, duration, isDefault } = req.body;
-
-      if (!name || price === undefined || !features || duration === undefined) {
-        throw new AppError("Todos os campos são obrigatórios", 400);
-      }
-
-      const existingPlan = await Plan.findOne({ name });
-      if (existingPlan) {
-        throw new AppError("Plano já existe", 400);
-      }
-
-      const plan = await Plan.create({
-        name,
-        price,
-        features,
-        duration,
-        isDefault,
-      });
-
-      res.status(201).json({
-        status: "success",
-        data: plan,
-      });
-    } catch (error) {
-      console.error("Erro ao criar plano:", error);
-      throw new AppError("Erro ao criar plano", 500);
-    }
-  }
-
   async listPlans(req: AuthRequest, res: Response): Promise<void> {
     try {
       const plans = await Plan.find({ isActive: true });
@@ -52,55 +21,29 @@ export class PlanController {
     }
   }
 
-  async updateUserPlan(req: AuthRequest, res: Response): Promise<void> {
+  async getUserCurrentPlan(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
-      const { planId } = req.body;
 
-      if (!planId) {
-        throw new AppError("O ID do plano é obrigatório", 400);
-      }
-
-      const plan = await Plan.findById(planId);
-      if (!plan) {
-        throw new AppError("Plano não encontrado", 404);
-      }
-
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).populate("plan");
       if (!user) {
         throw new AppError("Usuário não encontrado", 404);
       }
 
-      // Encerrar plano atual se existir
-      if (user.plan) {
-        await PlanHistory.findOneAndUpdate(
-          { userId: user._id, status: "active" },
-          {
-            endDate: new Date(),
-            status: "cancelled",
-            reason: "Mudança de plano",
-          }
-        );
+      if (!user.plan) {
+        res.status(404).json({
+          status: "fail",
+          message: "Usuário não possui um plano ativo.",
+        });
       }
-
-      // Criar novo registro de histórico
-      await PlanHistory.create({
-        userId: user._id,
-        planId: plan._id,
-        reason: "Atualização de plano",
-      });
-
-      // Atualizar plano do usuário
-      user.plan = plan._id as mongoose.Types.ObjectId;
-      await user.save();
 
       res.status(200).json({
         status: "success",
-        data: user,
+        data: user.plan,
       });
     } catch (error) {
-      console.error("Erro ao atualizar plano do usuário:", error);
-      throw new AppError("Erro ao atualizar plano do usuário", 500);
+      console.error("Erro ao buscar plano do usuário:", error);
+      throw new AppError("Erro ao buscar plano do usuário", 500);
     }
   }
 
@@ -163,31 +106,85 @@ export class PlanController {
     }
   }
 
-  //FEITO POR MATHEUS RBAS
-  //BUSCANDO O PLANO ATUAL DO USUARIO
-  async getUserCurrentPlan(req: AuthRequest, res: Response): Promise<void> {
+  async createPlan(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { name, price, features, duration, isDefault } = req.body;
+
+      if (!name || price === undefined || !features || duration === undefined) {
+        throw new AppError("Todos os campos são obrigatórios", 400);
+      }
+
+      const existingPlan = await Plan.findOne({ name });
+      if (existingPlan) {
+        throw new AppError("Plano já existe", 400);
+      }
+
+      const plan = await Plan.create({
+        name,
+        price,
+        features,
+        duration,
+        isDefault,
+      });
+
+      res.status(201).json({
+        status: "success",
+        data: plan,
+      });
+    } catch (error) {
+      console.error("Erro ao criar plano:", error);
+      throw new AppError("Erro ao criar plano", 500);
+    }
+  }
+
+  async updateUserPlan(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
+      const { planId } = req.body;
 
-      const user = await User.findById(userId).populate("plan");
+      if (!planId) {
+        throw new AppError("O ID do plano é obrigatório", 400);
+      }
+
+      const plan = await Plan.findById(planId);
+      if (!plan) {
+        throw new AppError("Plano não encontrado", 404);
+      }
+
+      const user = await User.findById(userId);
       if (!user) {
         throw new AppError("Usuário não encontrado", 404);
       }
 
-      if (!user.plan) {
-        res.status(404).json({
-          status: "fail",
-          message: "Usuário não possui um plano ativo.",
-        });
+      // Encerrar plano atual se existir
+      if (user.plan) {
+        await PlanHistory.findOneAndUpdate(
+          { userId: user._id, status: "active" },
+          {
+            endDate: new Date(),
+            status: "cancelled",
+            reason: "Mudança de plano",
+          }
+        );
       }
+      // Criar novo registro de histórico
+      await PlanHistory.create({
+        userId: user._id,
+        planId: plan._id,
+        reason: "Atualização de plano",
+      });
+
+      // Atualizar plano do usuário
+      user.plan = plan._id as mongoose.Types.ObjectId;
+      await user.save();
 
       res.status(200).json({
         status: "success",
-        data: user.plan,
+        data: user,
       });
     } catch (error) {
-      console.error("Erro ao buscar plano do usuário:", error);
-      throw new AppError("Erro ao buscar plano do usuário", 500);
+      console.error("Erro ao atualizar plano do usuário:", error);
+      throw new AppError("Erro ao atualizar plano do usuário", 500);
     }
   }
 }

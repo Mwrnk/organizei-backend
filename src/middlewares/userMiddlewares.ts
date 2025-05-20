@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { User } from "../models/User";
+import { User } from "../models/user";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
 
