@@ -3,16 +3,16 @@ import { Card, IComment } from "../models/card";
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 import { User } from "../models/user";
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import mongoose from 'mongoose';
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import mongoose from "mongoose";
 
 // Configuração do Multer para gerenciar uploads de arquivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     // Define a pasta 'uploads' como destino dos arquivos
-    const uploadDir = 'uploads';
+    const uploadDir = "uploads";
     // Cria a pasta se ela não existir
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir);
@@ -21,19 +21,30 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // Gera um nome único para o arquivo usando timestamp + número aleatório
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     // Mantém a extensão original do arquivo
     cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+  },
 });
 
 // Filtro para aceitar apenas imagens e PDFs
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (
+  req: any,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
   // Verifica se o arquivo é uma imagem ou PDF
-  if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+  if (
+    file.mimetype.startsWith("image/") ||
+    file.mimetype === "application/pdf"
+  ) {
     cb(null, true);
   } else {
-    cb(new Error('Tipo de arquivo não suportado. Apenas imagens e PDFs são permitidos.'));
+    cb(
+      new Error(
+        "Tipo de arquivo não suportado. Apenas imagens e PDFs são permitidos."
+      )
+    );
   }
 };
 
@@ -42,8 +53,8 @@ export const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 // Limite de 5MB por arquivo
-  }
+    fileSize: 5 * 1024 * 1024, // Limite de 5MB por arquivo
+  },
 });
 
 export interface IPdf {
@@ -92,6 +103,30 @@ export class CardController {
   }
 
   // Método para buscar um card específico por ID
+  // async getCardById(req: AuthRequest, res: Response): Promise<void> {
+  //   try {
+  //     const card = req.card;
+
+  //     res.status(200).json({
+  //       status: "success",
+  //       data: {
+  //         id: card._id,
+  //         title: card.title,
+  //         priority: card.priority,
+  //         is_published: card.is_published,
+  //         userId: card.userId,
+  //         listId: card.listId,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     if (error instanceof AppError) {
+  //       throw error;
+  //     }
+  //     throw new AppError("Erro ao buscar cartão", 500);
+  //   }
+  // }
+
+  //atualizado getCardById para devolver o pdf e imagens dos cards
   async getCardById(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
@@ -105,12 +140,12 @@ export class CardController {
           is_published: card.is_published,
           userId: card.userId,
           listId: card.listId,
+          pdfs: card.pdfs, 
+          image_url: card.image_url, 
+          content: card.content, 
         },
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       throw new AppError("Erro ao buscar cartão", 500);
     }
   }
@@ -219,7 +254,7 @@ export class CardController {
       if (card.likedBy && card.likedBy.includes(userId)) {
         res.status(400).json({
           status: "fail",
-          message: "Você já curtiu este card"
+          message: "Você já curtiu este card",
         });
         return;
       }
@@ -231,7 +266,6 @@ export class CardController {
 
       // Adiciona o usuário à lista de likes
       card.likedBy.push(userId);
-      
 
       // Incrementa o contador de likes
       card.likes = Number(card.likes) + 1;
@@ -274,7 +308,10 @@ export class CardController {
 
       // Verifica se o card está publicado
       if (!card.is_published) {
-        throw new AppError("Este card não está disponível para interações", 403);
+        throw new AppError(
+          "Este card não está disponível para interações",
+          403
+        );
       }
 
       // Verifica se o usuário está tentando descurtir seu próprio card
@@ -286,14 +323,16 @@ export class CardController {
       if (!card.likedBy || !card.likedBy.includes(userId)) {
         res.status(400).json({
           status: "fail",
-          message: "Você ainda não curtiu este card"
+          message: "Você ainda não curtiu este card",
         });
         return;
       }
 
       // Remove o usuário da lista de likes
-      card.likedBy = card.likedBy.filter((id: string | number) => id.toString() !== userId);
-      
+      card.likedBy = card.likedBy.filter(
+        (id: string | number) => id.toString() !== userId
+      );
+
       // Decrementa o contador de likes
       card.likes = Math.max(0, Number(card.likes) - 1);
       await card.save();
@@ -311,13 +350,13 @@ export class CardController {
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           status: "fail",
-          message: error.message
+          message: error.message,
         });
         return;
       }
       res.status(500).json({
         status: "error",
-        message: "Erro ao remover like do cartão"
+        message: "Erro ao remover like do cartão",
       });
     }
   }
@@ -360,7 +399,7 @@ export class CardController {
           image_url: updatedCard.image_url,
           pdfs: updatedCard.pdfs,
           priority: updatedCard.priority,
-          content: updatedCard.content
+          content: updatedCard.content,
         },
       });
     } catch (error) {
@@ -450,15 +489,15 @@ export class CardController {
 
       for (const file of files) {
         const fileUrl = `/uploads/${file.filename}`;
-        
-        if (file.mimetype.startsWith('image/')) {
+
+        if (file.mimetype.startsWith("image/")) {
           imageUrls.push(fileUrl);
-        } else if (file.mimetype === 'application/pdf') {
+        } else if (file.mimetype === "application/pdf") {
           pdfs.push({
             url: fileUrl,
             filename: file.originalname,
             uploaded_at: new Date(),
-            size_kb: Math.round(file.size / 1024)
+            size_kb: Math.round(file.size / 1024),
           });
         }
       }
@@ -468,7 +507,7 @@ export class CardController {
         card.image_url = card.image_url || [];
         card.image_url = [...card.image_url, ...imageUrls];
       }
-      
+
       if (pdfs.length > 0) {
         card.pdfs = card.pdfs || [];
         card.pdfs = [...card.pdfs, ...pdfs];
@@ -493,9 +532,9 @@ export class CardController {
             likes: card.likes,
             downloads: card.downloads,
             createdAt: card.createdAt,
-            updatedAt: card.updatedAt
-          }
-        }
+            updatedAt: card.updatedAt,
+          },
+        },
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -520,7 +559,7 @@ export class CardController {
         userId: new mongoose.Types.ObjectId(userId),
         text,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Adiciona o comentário ao card
@@ -533,9 +572,9 @@ export class CardController {
           comment,
           card: {
             id: card._id,
-            title: card.title
-          }
-        }
+            title: card.title,
+          },
+        },
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -559,18 +598,20 @@ export class CardController {
             text: comment.text,
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
-            user: user ? {
-              id: user._id,
-              name: user.name,
-              email: user.email
-            } : null
+            user: user
+              ? {
+                  id: user._id,
+                  name: user.name,
+                  email: user.email,
+                }
+              : null,
           };
         })
       );
 
       res.status(200).json({
         status: "success",
-        data: populatedComments
+        data: populatedComments,
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -592,7 +633,8 @@ export class CardController {
       }
 
       const commentIndex = card.comments.findIndex(
-        (c: IComment) => c._id.toString() === commentId && c.userId.toString() === userId
+        (c: IComment) =>
+          c._id.toString() === commentId && c.userId.toString() === userId
       );
 
       if (commentIndex === -1) {
@@ -604,7 +646,7 @@ export class CardController {
 
       res.status(200).json({
         status: "success",
-        message: "Comentário removido com sucesso"
+        message: "Comentário removido com sucesso",
       });
     } catch (error) {
       if (error instanceof AppError) {
