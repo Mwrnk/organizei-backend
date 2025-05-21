@@ -50,6 +50,7 @@ router.post("/cards/:id/like", validateRouteParams, checkCardById, checkCardIsPu
 router.post("/cards/:id/unlike", validateRouteParams, checkCardById, checkCardIsPublished, cardController.unlikeCard);
 
 router.post("/cards/:id/files", validateRouteParams, checkCardById, checkCardOwnership, upload.array('files', 5) as any, cardController.uploadFiles);
+router.get("/cards/:id/pdf/:pdfIndex", validateRouteParams, checkCardById, cardController.downloadPdf);
 router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
 router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
 

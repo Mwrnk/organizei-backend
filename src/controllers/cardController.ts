@@ -8,28 +8,11 @@ import path from 'path';
 import fs from 'fs';
 import mongoose from 'mongoose';
 
-// Configuração do Multer para gerenciar uploads de arquivos
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Define a pasta 'uploads' como destino dos arquivos
-    const uploadDir = 'uploads';
-    // Cria a pasta se ela não existir
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    // Gera um nome único para o arquivo usando timestamp + número aleatório
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    // Mantém a extensão original do arquivo
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configuração do Multer para armazenar arquivos em memória
+const storage = multer.memoryStorage();
 
 // Filtro para aceitar apenas imagens e PDFs
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  // Verifica se o arquivo é uma imagem ou PDF
   if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
     cb(null, true);
   } else {
@@ -47,8 +30,9 @@ export const upload = multer({
 });
 
 export interface IPdf {
-  url: string;
+  data: Buffer;
   filename: string;
+  mimetype: string;
   uploaded_at: Date;
   size_kb?: number;
 }
@@ -381,11 +365,7 @@ export class CardController {
       }
 
       const cards = await Card.find({ userId })
-        .sort({ createdAt: -1 })
-        .populate({
-          path: "tipoId", // ou outro campo referenciado
-          select: "nome", // só traz os campos que você quer
-        });
+        .sort({ createdAt: -1 });
 
       res.status(200).json({
         status: "success",
@@ -395,7 +375,6 @@ export class CardController {
       throw new AppError("Erro ao buscar cards do usuário", 500);
     }
   }
-
   // Método para deletar um card
   async deleteCard(req: AuthRequest, res: Response): Promise<void> {
     try {
@@ -449,14 +428,24 @@ export class CardController {
       const pdfs = [];
 
       for (const file of files) {
-        const fileUrl = `/uploads/${file.filename}`;
-        
         if (file.mimetype.startsWith('image/')) {
-          imageUrls.push(fileUrl);
+          // Para imagens, continuamos salvando em arquivo físico
+          const uploadDir = 'uploads';
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir);
+          }
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+          const filename = uniqueSuffix + path.extname(file.originalname);
+          const filepath = path.join(uploadDir, filename);
+          
+          fs.writeFileSync(filepath, file.buffer);
+          imageUrls.push(`/uploads/${filename}`);
         } else if (file.mimetype === 'application/pdf') {
+          // Para PDFs, armazenamos diretamente no banco
           pdfs.push({
-            url: fileUrl,
+            data: file.buffer,
             filename: file.originalname,
+            mimetype: file.mimetype,
             uploaded_at: new Date(),
             size_kb: Math.round(file.size / 1024)
           });
@@ -481,7 +470,11 @@ export class CardController {
         message: "Arquivos enviados com sucesso",
         data: {
           images: imageUrls,
-          pdfs: pdfs,
+          pdfs: pdfs.map(pdf => ({
+            filename: pdf.filename,
+            size_kb: pdf.size_kb,
+            uploaded_at: pdf.uploaded_at
+          })),
           card: {
             id: card._id,
             title: card.title,
@@ -611,6 +604,48 @@ export class CardController {
         throw error;
       }
       throw new AppError("Erro ao remover comentário", 500);
+    }
+  }
+
+  // Método para download de PDF
+  async downloadPdf(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const card = req.card;
+      const { pdfIndex } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AppError("Usuário não autenticado", 401);
+      }
+
+      // Verifica se o card está publicado ou se o usuário é o dono
+      if (!card.is_published && card.userId.toString() !== userId) {
+        throw new AppError("Você não tem permissão para acessar este PDF", 403);
+      }
+
+      const pdfIndexNum = parseInt(pdfIndex);
+      if (isNaN(pdfIndexNum) || pdfIndexNum < 0 || pdfIndexNum >= card.pdfs.length) {
+        throw new AppError("PDF não encontrado", 404);
+      }
+
+      const pdf = card.pdfs[pdfIndexNum];
+
+      // Incrementa o contador de downloads
+      card.downloads = (card.downloads || 0) + 1;
+      await card.save();
+
+      // Configura os headers para download
+      res.setHeader('Content-Type', pdf.mimetype);
+      res.setHeader('Content-Disposition', `attachment; filename="${pdf.filename}"`);
+      res.setHeader('Content-Length', pdf.data.length);
+
+      // Envia o arquivo
+      res.send(pdf.data);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao fazer download do PDF", 500);
     }
   }
 }

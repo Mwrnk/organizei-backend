@@ -26,8 +26,9 @@ export interface ICard extends Document {
 }
 
 export interface IPdf {
-  url: string;
+  data: Buffer;
   filename: string;
+  mimetype: string;
   uploaded_at: Date;
   size_kb?: number;
 }
@@ -86,8 +87,9 @@ const cardSchema = new Schema<ICard>(
       default: null,
     },
     pdfs: [{
-      url: String,
+      data: Buffer,
       filename: String,
+      mimetype: String,
       uploaded_at: Date,
       size_kb: Number
     }],
