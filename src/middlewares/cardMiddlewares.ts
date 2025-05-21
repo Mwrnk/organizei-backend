@@ -194,3 +194,32 @@ export const checkCardOwnership = async (
     next(error);
   }
 };
+
+export const validateLikeOperation = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const card = req.card;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AppError("Usuário não autenticado", 401);
+    }
+
+    // Verifica se o card está publicado
+    if (!card.is_published) {
+      throw new AppError("Este card não está disponível para curtidas", 403);
+    }
+
+    // Verifica se o usuário está tentando curtir seu próprio card
+    if (card.userId.toString() === userId) {
+      throw new AppError("Você não pode curtir seu próprio card", 403);
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};

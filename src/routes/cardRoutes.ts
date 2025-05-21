@@ -7,7 +7,8 @@ import {
   checkCardById,
   checkCardByTitle,
   checkCardOwnership,
-  checkCardIsPublished
+  checkCardIsPublished,
+  validateLikeOperation
 } from "../middlewares/cardMiddlewares";
 import { AppError } from "../middlewares/errorHandler";
 import { Request, Response, NextFunction } from "express";
@@ -46,8 +47,8 @@ router.get('/cards/user/:userId', validateRouteParams, cardController.getCardsBy
 
 // Rotas de manipulação
 router.post("/cards", validateCardData, cardController.createCard);
-router.post("/cards/:id/like", validateRouteParams, checkCardById, checkCardIsPublished, cardController.likeCard);
-router.post("/cards/:id/unlike", validateRouteParams, checkCardById, checkCardIsPublished, cardController.unlikeCard);
+router.post("/cards/:id/like", validateRouteParams, checkCardById, validateLikeOperation, cardController.likeCard);
+router.post("/cards/:id/unlike", validateRouteParams, checkCardById, validateLikeOperation, cardController.unlikeCard);
 
 router.post("/cards/:id/files", validateRouteParams, checkCardById, checkCardOwnership, upload.array('files', 5) as any, cardController.uploadFiles);
 router.get("/cards/:id/pdf/:pdfIndex", validateRouteParams, checkCardById, cardController.downloadPdf);

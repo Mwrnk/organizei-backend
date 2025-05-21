@@ -8,24 +8,8 @@ import path from "path";
 import fs from "fs";
 import mongoose from "mongoose";
 
-// Configuração do Multer para gerenciar uploads de arquivos
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Define a pasta 'uploads' como destino dos arquivos
-    const uploadDir = "uploads";
-    // Cria a pasta se ela não existir
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    // Gera um nome único para o arquivo usando timestamp + número aleatório
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    // Mantém a extensão original do arquivo
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
+// Configuração do Multer para armazenar arquivos em memória
+const storage = multer.memoryStorage();
 
 // Filtro para aceitar apenas imagens e PDFs
 const fileFilter = (
@@ -33,18 +17,10 @@ const fileFilter = (
   file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
-  // Verifica se o arquivo é uma imagem ou PDF
-  if (
-    file.mimetype.startsWith("image/") ||
-    file.mimetype === "application/pdf"
-  ) {
+  if (file.mimetype.startsWith("image/") || file.mimetype === "application/pdf") {
     cb(null, true);
   } else {
-    cb(
-      new Error(
-        "Tipo de arquivo não suportado. Apenas imagens e PDFs são permitidos."
-      )
-    );
+    cb(new Error("Tipo de arquivo não suportado. Apenas imagens e PDFs são permitidos."));
   }
 };
 
@@ -237,49 +213,40 @@ export class CardController {
       const card = req.card;
       const userId = req.user?.id;
 
-      if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
-      }
-
-      // Verifica se o card está publicado
-      if (!card.is_published) {
-        throw new AppError("Este card não está disponível para curtidas", 403);
-      }
-
-      // Verifica se o usuário está tentando curtir seu próprio card
-      if (card.userId.toString() === userId) {
-        throw new AppError("Você não pode curtir seu próprio card", 403);
-      }
-
-      // Verifica se o usuário já deu like no card
-      if (card.likedBy && card.likedBy.includes(userId)) {
-        res.status(400).json({
-          status: "fail",
-          message: "Você já curtiu este card",
-        });
-        return;
-      }
-
       // Inicializa o array likedBy se não existir
       if (!card.likedBy) {
         card.likedBy = [];
       }
 
+      // Verifica se o usuário já deu like no card
+      const hasLiked = card.likedBy.some((id: mongoose.Types.ObjectId) => id.toString() === userId);
+      if (hasLiked) {
+        res.status(400).json({
+          status: "fail",
+          message: "Você já curtiu este card"
+        });
+        return;
+      }
+
       // Adiciona o usuário à lista de likes
       card.likedBy.push(userId);
-
+      
       // Incrementa o contador de likes
-      card.likes = Number(card.likes) + 1;
-      await card.save();
+      card.likes = (card.likes || 0) + 1;
 
-      // Verifica se atingiu 20 likes únicos (likedBy.length)
-      if (card.likedBy.length % 20 === 0) {
+      // Calcula quantos likes únicos o card tem (baseado no tamanho do array likedBy)
+      const uniqueLikesCount = card.likedBy.length;
+      
+      // Verifica se atingiu um novo marco de 20 likes únicos
+      if (uniqueLikesCount % 20 === 0) {
         const user = await User.findById(card.userId);
         if (user) {
-          user.orgPoints = Number(user.orgPoints) + 1;
+          user.orgPoints = (user.orgPoints || 0) + 1;
           await user.save();
         }
       }
+
+      await card.save();
 
       res.status(200).json({
         status: "success",
@@ -288,6 +255,7 @@ export class CardController {
           title: card.title,
           likes: card.likes,
           userId: card.userId,
+          uniqueLikes: uniqueLikesCount
         },
       });
     } catch (error) {
@@ -484,17 +452,26 @@ export class CardController {
       const pdfs = [];
 
       for (const file of files) {
-        const fileUrl = `/uploads/${file.filename}`;
-
         if (file.mimetype.startsWith("image/")) {
-          imageUrls.push(fileUrl);
+          // Para imagens, salvamos em arquivo físico
+          const uploadDir = "uploads";
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir);
+          }
+          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+          const filename = uniqueSuffix + path.extname(file.originalname);
+          const filepath = path.join(uploadDir, filename);
+          
+          fs.writeFileSync(filepath, file.buffer);
+          imageUrls.push(`/uploads/${filename}`);
         } else if (file.mimetype === "application/pdf") {
+          // Para PDFs, salvamos diretamente no banco
           pdfs.push({
             data: file.buffer,
             filename: file.originalname,
             mimetype: file.mimetype,
             uploaded_at: new Date(),
-            size_kb: Math.round(file.size / 1024),
+            size_kb: Math.round(file.size / 1024)
           });
         }
       }
@@ -533,9 +510,9 @@ export class CardController {
             likes: card.likes,
             downloads: card.downloads,
             createdAt: card.createdAt,
-            updatedAt: card.updatedAt,
-          },
-        },
+            updatedAt: card.updatedAt
+          }
+        }
       });
     } catch (error) {
       if (error instanceof AppError) {
