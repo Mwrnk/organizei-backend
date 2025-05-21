@@ -131,11 +131,37 @@ export class CardController {
   async getCardByTitle(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { title } = req.params;
-      const card = await Card.findOne({ title });
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      // Busca total de documentos para calcular total de páginas
+      const totalDocs = await Card.countDocuments({ 
+        title: { $regex: title, $options: 'i' } 
+      });
+
+      const cards = await Card.find({ 
+        title: { $regex: title, $options: 'i' } 
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+      const totalPages = Math.ceil(totalDocs / limit);
 
       res.status(200).json({
         status: "success",
-        data: card,
+        data: {
+          cards,
+          pagination: {
+            page,
+            limit,
+            totalDocs,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+          }
+        }
       });
     } catch (error) {
       throw new AppError("Erro ao buscar cartão", 500);

@@ -25,23 +25,41 @@ export class PlanController {
     try {
       const { userId } = req.params;
 
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        throw new AppError("ID de usuário inválido", 400);
+      }
+
       const user = await User.findById(userId).populate("plan");
       if (!user) {
         throw new AppError("Usuário não encontrado", 404);
       }
 
+      // Se não tiver plano, tenta buscar o plano gratuito
       if (!user.plan) {
-        res.status(404).json({
-          status: "fail",
-          message: "Usuário não possui um plano ativo.",
+        const freePlan = await Plan.findById("68168764017ef3afb4b2ef30");
+        if (!freePlan) {
+          throw new AppError("Plano gratuito não encontrado", 500);
+        }
+
+        // Atualiza o usuário com o plano gratuito
+        user.plan = freePlan._id as mongoose.Types.ObjectId;
+        await user.save();
+
+        res.status(200).json({
+          status: "success",
+          data: freePlan
         });
+        return;
       }
 
       res.status(200).json({
         status: "success",
-        data: user.plan,
+        data: user.plan
       });
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       console.error("Erro ao buscar plano do usuário:", error);
       throw new AppError("Erro ao buscar plano do usuário", 500);
     }
