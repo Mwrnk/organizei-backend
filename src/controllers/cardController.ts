@@ -701,4 +701,42 @@ export class CardController {
       throw new AppError("Erro ao fazer download do PDF", 500);
     }
   }
+
+  // Método para visualizar PDF
+  async viewPdf(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const card = req.card;
+      const { pdfIndex } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AppError("Usuário não autenticado", 401);
+      }
+
+      // Verifica se o card está publicado ou se o usuário é o dono
+      if (!card.is_published && card.userId.toString() !== userId) {
+        throw new AppError("Você não tem permissão para acessar este PDF", 403);
+      }
+
+      const pdfIndexNum = parseInt(pdfIndex);
+      if (isNaN(pdfIndexNum) || pdfIndexNum < 0 || pdfIndexNum >= card.pdfs.length) {
+        throw new AppError("PDF não encontrado", 404);
+      }
+
+      const pdf = card.pdfs[pdfIndexNum];
+
+      // Configura os headers para visualização inline do PDF
+      res.setHeader('Content-Type', pdf.mimetype);
+      res.setHeader('Content-Disposition', `inline; filename="${pdf.filename}"`);
+      res.setHeader('Content-Length', pdf.data.length);
+
+      // Envia o arquivo
+      res.send(pdf.data);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao visualizar o PDF", 500);
+    }
+  }
 }
