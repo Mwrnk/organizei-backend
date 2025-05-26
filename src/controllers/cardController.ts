@@ -239,13 +239,20 @@ export class CardController {
       const card = req.card;
       const userId = req.user?.id;
 
+      if (!userId) {
+        throw new AppError("Usuário não autenticado", 401);
+      }
+
       // Inicializa o array likedBy se não existir
       if (!card.likedBy) {
         card.likedBy = [];
       }
 
       // Verifica se o usuário já deu like no card
-      const hasLiked = card.likedBy.some((id: mongoose.Types.ObjectId) => id.toString() === userId);
+      const hasLiked = card.likedBy.some((id: mongoose.Types.ObjectId) => 
+        id.toString() === userId.toString()
+      );
+
       if (hasLiked) {
         res.status(400).json({
           status: "fail",
@@ -255,7 +262,7 @@ export class CardController {
       }
 
       // Adiciona o usuário à lista de likes
-      card.likedBy.push(userId);
+      card.likedBy.push(new mongoose.Types.ObjectId(userId));
       
       // Incrementa o contador de likes
       card.likes = (card.likes || 0) + 1;
