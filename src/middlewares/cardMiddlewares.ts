@@ -3,6 +3,7 @@ import { Card } from "../models/card";
 import { List } from "../models/list";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
+import mongoose from "mongoose";
 
 export const validateCardData = async (
   req: AuthRequest,
@@ -115,9 +116,11 @@ export const checkCardById = async (
     next();
   } catch (error) {
     if (error instanceof AppError) {
-      throw error;
+      next(error);
+      return;
     }
-    throw new AppError("Erro ao verificar cartão", 500);
+    console.error("Erro no middleware checkCardById:", error);
+    next(new AppError("Erro ao verificar cartão", 500));
   }
 };
 
@@ -143,9 +146,11 @@ export const checkCardByTitle = async (
     next();
   } catch (error) {
     if (error instanceof AppError) {
-      throw error;
+      next(error);
+      return;
     }
-    throw new AppError("Erro ao verificar cartão", 500);
+    console.error("Erro no middleware checkCardByTitle:", error);
+    next(new AppError("Erro ao verificar cartão", 500));
   }
 };
 
@@ -184,6 +189,10 @@ export const checkCardOwnership = async (
       throw new AppError("Usuário não autenticado", 401);
     }
 
+    if (!card) {
+      throw new AppError("Card não encontrado", 404);
+    }
+
     // Se não for admin, só pode manipular seus próprios cards
     if (!isAdmin && card?.userId?.toString() !== userId) {
       throw new AppError("Você não tem permissão para realizar esta ação", 403);
@@ -191,7 +200,12 @@ export const checkCardOwnership = async (
 
     next();
   } catch (error) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+      return;
+    }
+    console.error("Erro no middleware checkCardOwnership:", error);
+    next(new AppError("Erro interno do servidor", 500));
   }
 };
 
