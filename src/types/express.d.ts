@@ -3,6 +3,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { Card } from "../models/card";
 import { List } from "../models/list";
 import { Flashcard, Tag } from "../models/flashcard";
+import { IQuizSession } from "../models/Quiz";
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;
@@ -12,6 +13,7 @@ export interface AuthRequest extends Request {
   flashcard?: Flashcard;
   tag?: Tag;
   tags?: Tag[];
+  quizSession?: IQuizSession;
 }
 
 declare global {
@@ -24,6 +26,7 @@ declare global {
       flashcard?: Flashcard;
       tag?: Tag;
       tags?: Tag[];
+      quizSession?: IQuizSession;
     }
   }
 }
