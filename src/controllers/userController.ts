@@ -105,13 +105,21 @@ export class UserController {
       const user = await User.findOne({ email }).select("+password");
 
       if (!user) {
-        throw new AppError("Usuário não encontrado", 404);
+        res.status(404).json({
+          status: "fail",
+          message: "Email ou senha incorretos"
+        });
+        return;
       }
 
       const isPasswordValid = await compare(password, user.password);
 
       if (!isPasswordValid) {
-        throw new AppError("Senha incorreta", 401);
+        res.status(401).json({
+          status: "fail",
+          message: "Email ou senha incorretos"
+        });
+        return;
       }
 
       const token = generateToken(user._id as string, user.email);
@@ -128,10 +136,10 @@ export class UserController {
         },
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError("Erro ao fazer login", 500);
+      res.status(500).json({
+        status: "error",
+        message: "Erro interno do servidor"
+      });
     }
   }
 

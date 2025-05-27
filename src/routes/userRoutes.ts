@@ -25,7 +25,7 @@ const validateRouteParams = (req: any, res: any, next: any) => {
 
 // Rotas públicas
 router.get("/users", userController.getUsers);
-router.post("/signup", validateSignupData, userController.signup);
+router.post("/signup",checkUserExists, validateSignupData, userController.signup);
 router.post("/login", validateLoginData, userController.login);
 
 // Rotas protegidas

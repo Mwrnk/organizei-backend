@@ -3,7 +3,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { Card } from "../models/card";
 import { List } from "../models/list";
 import { Flashcard, Tag } from "../models/flashcard";
-import { IQuizSession } from "../models/Quiz";
+import { IQuizSession } from "../models/quiz";
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;

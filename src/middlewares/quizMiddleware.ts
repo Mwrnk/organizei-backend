@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
-import { QuizSession } from "../models/Quiz";
+import { QuizSession } from "../models/quiz";
 import { Card } from "../models/card";
 
 export const validateQuizStartData = async (

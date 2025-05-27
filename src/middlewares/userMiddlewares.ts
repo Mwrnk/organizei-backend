@@ -173,6 +173,12 @@ export const checkUserExists = async (
     }
 
     const { id } = req.params;
+    
+    // Verifica se o ID foi fornecido
+    if (!id) {
+      throw new AppError("ID do usuário é obrigatório", 400);
+    }
+
     const user = await User.findById(id);
 
     if (!user) {

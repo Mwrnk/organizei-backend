@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Comment } from "../models/comment";
+import { Comment } from "../models/Comment";
 import { AppError } from "../middlewares/errorHandler";
 
 export class CommentController {

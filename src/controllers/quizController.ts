@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { Response } from "express";
 import { AuthRequest } from "../types/express";
 import { AppError } from "../middlewares/errorHandler";
-import { QuizSession, IQuizQuestion } from "../models/Quiz";
+import { QuizSession, IQuizQuestion } from "../models/quiz";
 import { Card } from "../models/card";
 import { User } from "../models/user";
 import { generateQuizPrompt, context, model, temperature } from "../prompts/generateQuizPrompt";
