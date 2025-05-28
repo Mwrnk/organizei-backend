@@ -73,7 +73,7 @@ export const validateFlashcardWithAIData = async (
 
         const parsedAmount = Number(amount);
 
-        if(!Number.isInteger(parsedAmount) || parsedAmount < 1 || parsedAmount > 10){
+        if(isNaN(parsedAmount) || !Number.isInteger(parsedAmount) || parsedAmount < 1 || parsedAmount > 10){
             throw new AppError("A quantidade a gerar deve ser um número inteiro entre 1 e 10", 400);
         }
 

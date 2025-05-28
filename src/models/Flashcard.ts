@@ -39,7 +39,7 @@ const flashcardSchema = new Schema<IFlashcard>(
         },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Card",
+            ref: "User",
             required: [true, "ID do usuário é obrigatório"],
         },
         front: {
@@ -96,6 +96,9 @@ const flashcardSchema = new Schema<IFlashcard>(
                 }
             }
         ],
+    },
+    {
+        timestamps: true,
     }
 );
 

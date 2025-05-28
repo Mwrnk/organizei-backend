@@ -13,7 +13,13 @@ export class FlashcardsController {
     private clientOpenAI: OpenAI;
 
     constructor(){
-        this.clientOpenAI = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        if (!process.env.OPENAI_API_KEY) {
+            throw new Error("OPENAI_API_KEY não está configurada nas variáveis de ambiente");
+        }
+        this.clientOpenAI = new OpenAI({ 
+            apiKey: process.env.OPENAI_API_KEY,
+            timeout: 30000, // 30 segundos de timeout
+        });
     }
 
     createFlashcard = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -71,7 +77,20 @@ export class FlashcardsController {
 
             const resultGpt = await this.generateFlashCardsWithAI(prompt);
 
-            const convertedResults = JSON.parse(resultGpt);
+            console.log("Resposta bruta da OpenAI:", resultGpt);
+
+            let convertedResults;
+            try {
+                convertedResults = JSON.parse(resultGpt);
+            } catch (parseError) {
+                console.error("Erro ao fazer parse da resposta da OpenAI:", parseError);
+                console.error("Resposta que causou erro:", resultGpt);
+                throw new AppError("Resposta da IA não está em formato JSON válido", 500);
+            }
+
+            if (!Array.isArray(convertedResults)) {
+                throw new AppError("Resposta da IA não é um array válido", 500);
+            }
 
             const preparedFlashcards = await this.prepareFlashcards(convertedResults, card.id, userId);
 
@@ -83,9 +102,12 @@ export class FlashcardsController {
                     flashcards: insertedFlashcards
                 }
             });
-        } catch(error: any) {
-            console.error("Erro ao se comunicar com a OpenAI:", error.message);
-            res.status(500).json({ error: error.message || "Erro desconhecido" });
+        } catch (error: any) {
+            console.error("Erro ao criar flashcards com IA:", error.message);
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError("Erro ao gerar flashcards com IA", 500);
         }
     };
 
@@ -239,27 +261,35 @@ export class FlashcardsController {
     };
 
     handleReview = async (req: AuthRequest, res: Response): Promise<void> => {
-        const userId = req.user?.id;
-        const { grade } = req.body;
-        const flashcard = req.flashcard;
+        try {
+            const userId = req.user?.id;
+            const { grade } = req.body;
+            const flashcard = req.flashcard;
 
-        if (!userId) {
-            throw new AppError("Usuário não autenticado", 401);
-        }
-
-        flashcard.scheduling = this.updateScheduling(flashcard.scheduling, grade);
-
-        flashcard.reviewLog.push(this.createReviewLog(grade));
-        
-        flashcard.markModified('scheduling')
-        const updatedFlashcard =  await flashcard.save();
-
-        res.status(201).json({
-            status: "success",
-            data: {
-                flashcard: updatedFlashcard
+            if (!userId) {
+                throw new AppError("Usuário não autenticado", 401);
             }
-        });
+
+            flashcard.scheduling = this.updateScheduling(flashcard.scheduling, grade);
+
+            flashcard.reviewLogs.push(this.createReviewLog(grade));
+            
+            flashcard.markModified('scheduling');
+            flashcard.markModified('reviewLogs');
+            const updatedFlashcard = await flashcard.save();
+
+            res.status(201).json({
+                status: "success",
+                data: {
+                    flashcard: updatedFlashcard
+                }
+            });
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError("Erro ao processar revisão do flashcard", 500);
+        }
     };
 
     private updateScheduling = (scheduling: IScheduling, grade: number): IScheduling => {
@@ -274,9 +304,9 @@ export class FlashcardsController {
             interval = 1;
         }
 
-        easeFactor = Math.max(this.calcEaseFactor(easeFactor, grade)), 1.3; // 1.3 valor mínimo no algoritmo SM-2
+        easeFactor = Math.max(this.calcEaseFactor(easeFactor, grade), 1.3); // 1.3 valor mínimo no algoritmo SM-2
 
-        nextReview.setDate(now.getDate() + interval);
+        nextReview = new Date(now.getTime() + interval * 24 * 60 * 60 * 1000);
 
         const updatedScheduling: IScheduling = {
             repetitions,
@@ -320,31 +350,59 @@ export class FlashcardsController {
     };
 
     private generateFlashCardsWithAI = async (prompt: string): Promise<string> => {
-        const completion = await this.clientOpenAI.chat.completions.create({
-            model: model,
-            messages: [ 
-                {
-                    role: "system",
-                    content: context
-                },
-                {
-                    role: "user",
-                    content: prompt
-                }
-            ],
-            "temperature": temperature,
-        });
+        try {
+            console.log("Iniciando comunicação com OpenAI...");
+            
+            const completion = await this.clientOpenAI.chat.completions.create({
+                model: model,
+                messages: [ 
+                    {
+                        role: "system",
+                        content: context
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                temperature: temperature,
+                max_tokens: 2000,
+            });
 
-        if(!completion.choices[0].message.content){
+            console.log("Resposta recebida da OpenAI");
+
+            if (!completion.choices[0]?.message?.content) {
                 throw new AppError("Nenhuma resposta da OpenAI", 500);
-        }
+            }
 
-        return completion.choices[0].message.content;
+            return completion.choices[0].message.content;
+        } catch (error: any) {
+            console.error("Erro detalhado da OpenAI:", {
+                message: error.message,
+                type: error.type,
+                code: error.code,
+                status: error.status
+            });
+
+            if (error.code === 'insufficient_quota') {
+                throw new AppError("Cota da API OpenAI esgotada", 402);
+            }
+            
+            if (error.code === 'invalid_api_key') {
+                throw new AppError("Chave da API OpenAI inválida", 401);
+            }
+
+            if (error.message?.includes('Connection error') || error.code === 'ENOTFOUND') {
+                throw new AppError("Erro de conexão com a OpenAI. Verifique sua conexão com a internet", 503);
+            }
+
+            throw new AppError(`Erro na comunicação com OpenAI: ${error.message}`, 500);
+        }
     };
 
     private prepareFlashcards = async (
         flashcardsGenerated: 
-            [{ front: string, back: string, tags: string[] }],
+            { front: string, back: string, tags: string[] }[],
             cardId: string,
             userId: string 
         ) => {
