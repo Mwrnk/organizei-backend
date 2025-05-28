@@ -36,7 +36,7 @@ export class PlanController {
 
       // Se não tiver plano, tenta buscar o plano gratuito
       if (!user.plan) {
-        const freePlan = await Plan.findById("68168764017ef3afb4b2ef30");
+        const freePlan = await Plan.findById("68379d6589ed7583b0596d8a");
         if (!freePlan) {
           throw new AppError("Plano gratuito não encontrado", 500);
         }
