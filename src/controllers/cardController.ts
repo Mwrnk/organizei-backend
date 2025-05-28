@@ -367,7 +367,7 @@ export class CardController {
   async editCard(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
-      const { title, priority, is_published, image_url, content } = req.body;
+      const { title, priority, is_published, image_url, content, listId } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -383,7 +383,7 @@ export class CardController {
 
       const updatedCard = await Card.findByIdAndUpdate(
         card._id,
-        { title, priority, is_published, image_url, content },
+        { title, priority, is_published, image_url, content, listId },
         { new: true, runValidators: true }
       );
 
@@ -402,6 +402,7 @@ export class CardController {
           pdfs: updatedCard.pdfs,
           priority: updatedCard.priority,
           content: updatedCard.content,
+          listId: updatedCard.listId,
         },
       });
     } catch (error) {

@@ -50,9 +50,9 @@ export const validateCardUpdateData = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { title, priority, is_published, image_url } = req.body;
+    const { title, priority, is_published, image_url, listId } = req.body;
 
-    if (!title && !priority && !is_published && !image_url) {
+    if (!title && !priority && !is_published && !image_url && !listId) {
       throw new AppError(
         "Pelo menos um campo deve ser enviado para atualização",
         400
@@ -72,6 +72,19 @@ export const validateCardUpdateData = async (
     // Validação do is_published se fornecido
     if (is_published !== undefined && typeof is_published !== "boolean") {
       throw new AppError("is_published deve ser um valor booleano", 400);
+    }
+
+    // Validação do listId se fornecido
+    if (listId) {
+      if (!listId.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new AppError("ID da lista inválido", 400);
+      }
+
+      // Verificar se a lista existe
+      const list = await List.findById(listId);
+      if (!list) {
+        throw new AppError("Lista não encontrada", 404);
+      }
     }
 
     // Validação das URLs das imagens se fornecidas
