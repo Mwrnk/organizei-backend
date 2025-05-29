@@ -71,9 +71,9 @@ export const validateListUpdateData = async (
     }
 
     // Validação de caracteres especiais no nome
-    if (!/^[a-zA-Z0-9\s\-_]+$/.test(name)) {
+    /*if (!/^[a-zA-Z0-9\s\-_]+$/.test(name)) {
       throw new AppError("O nome contém caracteres inválidos", 400);
-    }
+    }*/
 
     // Verificar duplicidade de nome para o mesmo usuário
     const list = req.list;

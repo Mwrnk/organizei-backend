@@ -16,7 +16,6 @@ import quizRoutes from "./routes/quizRoutes";
 import path from "path";
 import cron from "node-cron";
 import { checkExpiredPlansJob } from "./jobs/checkExpiredPlans";
-import { env } from './config/env'; 
 
 const app = express();
 
@@ -56,8 +55,7 @@ cron.schedule("0 0 * * *", () => {
 app.get("/", (req: Request, res: Response) => {
   res.send("A API está online");
 });
-
-// Porta
-app.listen(env.PORT, '0.0.0.0', () => {
-  console.log(`Servidor rodando na porta ${env.PORT}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
