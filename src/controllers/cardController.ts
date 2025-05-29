@@ -271,7 +271,7 @@ export class CardController {
       const uniqueLikesCount = card.likedBy.length;
       
       // Verifica se atingiu um novo marco de 20 likes únicos
-      if (uniqueLikesCount % 20 === 0) {
+      if (uniqueLikesCount % 1 === 0) {
         const user = await User.findById(card.userId);
         if (user) {
           user.orgPoints = (user.orgPoints || 0) + 1;
@@ -322,7 +322,11 @@ export class CardController {
       }
 
       // Verifica se o usuário já deu like no card
-      if (!card.likedBy || !card.likedBy.includes(userId)) {
+      const hasLiked = card.likedBy.some((id: mongoose.Types.ObjectId) => 
+        id.toString() === userId.toString()
+      );
+
+      if (!hasLiked) {
         res.status(400).json({
           status: "fail",
           message: "Você ainda não curtiu este card",
@@ -332,11 +336,15 @@ export class CardController {
 
       // Remove o usuário da lista de likes
       card.likedBy = card.likedBy.filter(
-        (id: string | number) => id.toString() !== userId
+        (id: mongoose.Types.ObjectId) => id.toString() !== userId.toString()
       );
 
       // Decrementa o contador de likes
-      card.likes = Math.max(0, Number(card.likes) - 1);
+      card.likes = Math.max(0, (card.likes || 0) - 1);
+      
+      // Calcula quantos likes únicos o card tem
+      const uniqueLikesCount = card.likedBy.length;
+
       await card.save();
 
       res.status(200).json({
@@ -346,6 +354,7 @@ export class CardController {
           title: card.title,
           likes: card.likes,
           userId: card.userId,
+          uniqueLikes: uniqueLikesCount
         },
       });
     } catch (error) {
