@@ -27,7 +27,8 @@ export class CommentController {
   async createComment(req: any, res: Response): Promise<void> {
     try {
       const { cardId, description } = req.body;
-      const userId = req.userId;
+      const userId = req.user.id;
+      //antes estava const userId = req.userId mas nao estava funcionando rsrsrsrs
 
       const newComment = await Comment.create({
         cardId,
@@ -115,7 +116,7 @@ export class CommentController {
       }
     }
   }
- async getAllComments(req: any, res: Response): Promise<void> {
+  async getAllComments(req: any, res: Response): Promise<void> {
     try {
       const comments = await Comment.find().populate("userId", "name email");
 
@@ -131,6 +132,4 @@ export class CommentController {
       }
     }
   }
-
-
 }
