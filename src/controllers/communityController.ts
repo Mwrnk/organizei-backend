@@ -36,7 +36,16 @@ export class CommunityController {
   // Listar todos os cards publicados
   async getPublishedCards(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const cards = await Card.find({ is_published: true })
+      const cards = await Card.find({ is_published: true }, {
+        _id: 0,
+        id: "$_id",
+        title: 1,
+        priority: 1,
+        downloads: 1,
+        likes: 1,
+        comments: 1,
+        image_url: 1
+      })
         .sort({ createdAt: -1 })
         .populate({
           path: "userId",
@@ -45,15 +54,7 @@ export class CommunityController {
 
       res.status(200).json({
         status: "success",
-        data: cards.map((card) => ({
-          id: card._id,
-          title: card.title,
-          priority: card.priority,
-          downloads: card.downloads,
-          likes: card.likes,
-          comments: card.comments,
-          user: card.userId,
-        })),
+        data: cards,
       });
     } catch (error) {
       if (error instanceof AppError) {

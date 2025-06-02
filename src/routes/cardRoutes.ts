@@ -53,6 +53,7 @@ router.post("/cards/:id/unlike", validateRouteParams, checkCardById, validateLik
 router.post("/cards/:id/files", validateRouteParams, checkCardById, checkCardOwnership, upload.array('files', 5) as any, cardController.uploadFiles);
 router.get("/cards/:id/pdf/:pdfIndex/download", validateRouteParams, checkCardById, cardController.downloadPdf);
 router.get("/cards/:id/pdf/:pdfIndex/view", validateRouteParams, checkCardById, cardController.viewPdf);
+router.get('/cards/:id/pdfs/', validateRouteParams, cardController.getPdfsByCardId);
 router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
 router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
 

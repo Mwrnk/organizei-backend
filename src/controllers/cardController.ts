@@ -51,7 +51,15 @@ export class CardController {
         throw new AppError("Usuário não autenticado", 401);
       }
 
-      const cards = await Card.find({ userId })
+      const cards = await Card.find({ userId }, {
+        _id: 0,
+        id: "$_id",
+        title: 1,
+        priority: 1,
+        is_published: 1,
+        userId: 1,
+        listId: 1
+      })
         .sort({ createdAt: -1 })
         .populate({
           path: "listId",
@@ -62,14 +70,7 @@ export class CardController {
 
       res.status(200).json({
         status: "success",
-        data: cards.map((card) => ({
-          id: card._id,
-          title: card.title,
-          priority: card.priority,
-          is_published: card.is_published,
-          userId: card.userId,
-          listId: card.listId,
-        })),
+        data: cards,
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -111,15 +112,15 @@ export class CardController {
       res.status(200).json({
         status: "success",
         data: {
+          pdfs: card.pdfs,
           id: card._id,
           title: card.title,
           priority: card.priority,
           is_published: card.is_published,
           userId: card.userId,
           listId: card.listId,
-          pdfs: card.pdfs, 
           image_url: card.image_url, 
-          content: card.content, 
+          content: card.content,
         },
       });
     } catch (error) {
@@ -178,17 +179,18 @@ export class CardController {
         throw new AppError("Usuário não autenticado", 401);
       }
 
-      const cards = await Card.find({ listId, userId });
+      const cards = await Card.find({ listId, userId }, {
+        _id: 0,
+        id: "$_id",
+        title: 1,
+        priority: 1,
+        is_published: 1,
+        userId: 1,
+      });
 
       res.status(200).json({
         status: "success",
-        data: cards.map((card) => ({
-          id: card._id,
-          title: card.title,
-          priority: card.priority,
-          is_published: card.is_published,
-          userId: card.userId,
-        })),
+        data: cards,
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -719,12 +721,41 @@ export class CardController {
     }
   }
 
+  getPdfsByCardId = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const cardId = req.params.id;
+
+      const pdfsFromCard = await Card.findById(cardId, { 
+        "pdfs.filename": 1,
+        "pdfs.mimetype": 1,
+        "pdfs.uploaded_at": 1,
+        "pdfs.size_kb": 1
+      });
+
+      res.status(200).json({
+        status: "success",
+        pdfsFromCard
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao visualizar o PDF", 500);
+    }
+  }
+
   // Método para visualizar PDF
   async viewPdf(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const card = req.card;
+      const cardId = req.card._id;
       const { pdfIndex } = req.params;
       const userId = req.user?.id;
+
+      const card = await Card.findById(cardId);
+
+      if(!card){
+        throw new AppError("Cartão não encontrado", 404);
+      }
 
       if (!userId) {
         throw new AppError("Usuário não autenticado", 401);

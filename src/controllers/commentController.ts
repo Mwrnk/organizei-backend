@@ -8,7 +8,7 @@ export class CommentController {
       const { cardId } = req.params;
       const comments = await Comment.find({ cardId }).populate(
         "userId",
-        "name email"
+        "name email profileImage"
       );
 
       res.status(200).json({

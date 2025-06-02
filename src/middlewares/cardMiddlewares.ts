@@ -119,7 +119,7 @@ export const checkCardById = async (
       throw new AppError("ID inválido", 400);
     }
 
-    const card = await Card.findById(id);
+    const card = await Card.findById(id, { "pdfs.data": 0 });
 
     if (!card) {
       throw new AppError("Cartão não encontrado", 404);
@@ -149,7 +149,7 @@ export const checkCardByTitle = async (
       throw new AppError("Título é obrigatório", 400);
     }
 
-    const card = await Card.findOne({ title });
+    const card = await Card.findOne({ title }, { "pdfs.data": 0 });
 
     if (!card) {
       throw new AppError("Cartão não encontrado", 404);

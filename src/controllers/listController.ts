@@ -44,14 +44,40 @@ export class ListController {
   async getListByUserId(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
-      const lists = await List.find({ userId });
+
+      const listsAggregated = await List.aggregate([
+        { $match : { userId } },
+        {
+          $lookup: {
+            from: "cards",
+            localField: "_id",
+            foreignField: "listId",
+            as: "cards"
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            id: "$_id",
+            name: 1,
+            cards: {
+              $map: {
+                input: "$cards",
+                as: "card",
+                in: {
+                  id: "$$card._id",
+                  title: "$$card.title",
+                  createdAt: "$$card.createdAt",
+                }
+              }
+            }
+          }
+        }
+      ]);
 
       res.status(200).json({
         status: "success",
-        data: lists.map((list) => ({
-          id: list._id,
-          name: list.name,
-        })),
+        data: listsAggregated
       });
     } catch (error) {
       throw new AppError("Erro ao buscar listas do usuário", 500);
