@@ -119,7 +119,7 @@ export const checkCardById = async (
       throw new AppError("ID inválido", 400);
     }
 
-    const card = await Card.findById(id, { "pdfs.data": 0 });
+    const card = await Card.findById(id);
 
     if (!card) {
       throw new AppError("Cartão não encontrado", 404);

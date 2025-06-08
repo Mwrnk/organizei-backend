@@ -44,7 +44,12 @@ export class QuizController {
 
       // Verificar se o card tem PDFs
       if (!card.pdfs || card.pdfs.length === 0) {
-        throw new AppError("Este card não possui PDFs para gerar perguntas", 400);
+        throw new AppError("Este card não possui PDFs para gerar perguntas. Por favor, adicione um PDF ao card primeiro.", 400);
+      }
+
+      // Verificar se o primeiro PDF tem dados válidos
+      if (!card.pdfs[0]?.data) {
+        throw new AppError("O PDF deste card está corrompido ou vazio. Por favor, faça upload de um novo PDF.", 400);
       }
 
       // Verificar se o usuário tem acesso ao card

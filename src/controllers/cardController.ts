@@ -695,9 +695,31 @@ export class CardController {
         throw new AppError("Você não tem permissão para acessar este PDF", 403);
       }
 
+      // Verifica se o card tem PDFs - retorna resposta JSON em vez de erro
+      if (!card.pdfs || card.pdfs.length === 0) {
+        res.status(200).json({
+          status: "info",
+          message: "Este card não possui PDFs disponíveis para download",
+          data: {
+            hasPdfs: false,
+            cardTitle: card.title
+          }
+        });
+        return;
+      }
+
       const pdfIndexNum = parseInt(pdfIndex);
       if (isNaN(pdfIndexNum) || pdfIndexNum < 0 || pdfIndexNum >= card.pdfs.length) {
-        throw new AppError("PDF não encontrado", 404);
+        res.status(200).json({
+          status: "info",
+          message: "PDF não encontrado no índice especificado",
+          data: {
+            hasPdfs: true,
+            availablePdfs: card.pdfs.length,
+            requestedIndex: pdfIndexNum
+          }
+        });
+        return;
       }
 
       const pdf = card.pdfs[pdfIndexNum];
@@ -766,12 +788,45 @@ export class CardController {
         throw new AppError("Você não tem permissão para acessar este PDF", 403);
       }
 
+      // Verifica se o card tem PDFs - retorna resposta JSON em vez de erro
+      if (!card.pdfs || card.pdfs.length === 0) {
+        res.status(200).json({
+          status: "info",
+          message: "Este card não possui PDFs disponíveis",
+          data: {
+            hasPdfs: false,
+            cardTitle: card.title
+          }
+        });
+        return;
+      }
+
       const pdfIndexNum = parseInt(pdfIndex);
       if (isNaN(pdfIndexNum) || pdfIndexNum < 0 || pdfIndexNum >= card.pdfs.length) {
-        throw new AppError("PDF não encontrado", 404);
+        res.status(200).json({
+          status: "info",
+          message: "PDF não encontrado no índice especificado",
+          data: {
+            hasPdfs: true,
+            availablePdfs: card.pdfs.length,
+            requestedIndex: pdfIndexNum
+          }
+        });
+        return;
       }
 
       const pdf = card.pdfs[pdfIndexNum];
+      if (!pdf || !pdf.data) {
+        res.status(200).json({
+          status: "info", 
+          message: "PDF corrompido ou vazio",
+          data: {
+            hasPdfs: true,
+            pdfExists: false
+          }
+        });
+        return;
+      }
 
       // Configura os headers para visualização inline do PDF
       res.setHeader('Content-Type', pdf.mimetype);
