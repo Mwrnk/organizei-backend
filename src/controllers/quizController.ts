@@ -164,7 +164,7 @@ export class QuizController {
       if (isCorrect) {
         const user = await User.findById(userId);
         if (user) {
-          user.orgPoints = (user.orgPoints || 0) + 1;
+          user.orgPoints = (user.orgPoints || 0) + 10;
           await user.save();
         }
       }
