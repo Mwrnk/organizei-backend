@@ -4,11 +4,12 @@ export const temperature = 0.7;
 export const context = "Você é um gerador de perguntas de quiz educativo. Sua função é criar perguntas de múltipla escolha baseadas no conteúdo fornecido, com 4 opções sendo apenas uma correta.";
 
 export const generateQuizPrompt = (
+    amount: number,
     pdfContent: string,
     cardTitle: string
 ): string => {
     return `
-Com base no conteúdo do PDF fornecido sobre "${cardTitle}", gere UMA pergunta de múltipla escolha educativa.
+Com base no conteúdo do PDF fornecido sobre "${cardTitle}", gere ${amount} perguntas de múltipla escolha educativa.
 
 ### Conteúdo do PDF:
 ${pdfContent}
