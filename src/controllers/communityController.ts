@@ -69,23 +69,29 @@ export class CommunityController {
     try {
       const card = req.card;
       const userId = req.user?.id;
+      const { listId } = req.body;
 
       if (!userId) {
         throw new AppError("Usuário não autenticado", 401);
       }
 
-      // Incrementa o contador de downloads
+      if (!listId) {
+        throw new AppError("ID da lista de destino é obrigatório", 400);
+      }
+
+      // Incrementa o contador de downloads no card original
       card.downloads = Number(card.downloads) + 1;
       await card.save();
 
-      // Cria uma cópia do card para o usuário
+      // Cria uma cópia do card para o usuário com a nova lista
       const cardCopy = await Card.create({
         ...card.toObject(),
         _id: undefined,
-        userId: userId,
+        userId,
+        listId, // <- lista escolhida pelo usuário no frontend
         downloads: 0,
         likes: 0,
-        comments: 0,
+        comments: [],
         is_published: false,
         createdAt: new Date(),
         updatedAt: new Date(),
