@@ -131,6 +131,12 @@ export class ListController {
   async deleteList(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      
+      // Primeiro, deletar todos os cards que pertencem a esta lista
+      const { Card } = await import("../models/card");
+      await Card.deleteMany({ listId: id });
+      
+      // Depois, deletar a lista
       await List.findByIdAndDelete(id);
 
       res.status(204).json({
