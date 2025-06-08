@@ -56,6 +56,6 @@ app.get("/", (req: Request, res: Response) => {
   res.send("A API está online");
 });
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
