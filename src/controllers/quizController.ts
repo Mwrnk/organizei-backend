@@ -24,10 +24,16 @@ export class QuizController {
   startQuiz = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { cardId } = req.params;
+      const { amount = 1 } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
         throw new AppError("Usuário não autenticado", 401);
+      }
+
+      // Validar quantidade de perguntas
+      if (amount < 1 || amount > 10) {
+        throw new AppError("A quantidade de perguntas deve estar entre 1 e 10", 400);
       }
 
       // Buscar o card
@@ -311,7 +317,7 @@ export class QuizController {
       // Limitar o conteúdo para evitar tokens excessivos (primeiros 3000 caracteres)
       const limitedContent = pdfContent.substring(0, 3000);
       
-      const prompt = generateQuizPrompt(limitedContent, cardTitle);
+      const prompt = generateQuizPrompt(1, limitedContent, cardTitle);
 
       const completion = await this.clientOpenAI.chat.completions.create({
         model: model,
