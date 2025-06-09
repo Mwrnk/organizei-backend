@@ -27,6 +27,8 @@ const validateRouteParams = (req: any, res: any, next: any) => {
 router.get("/users", userController.getUsers);
 router.post("/signup",checkUserExists, validateSignupData, userController.signup);
 router.post("/login", validateLoginData, userController.login);
+router.get("/users/check-nickname", userController.checkNickname);
+router.get("/users/check-email", userController.checkEmail);
 
 // Rotas protegidas
 router.use(authMiddleware);

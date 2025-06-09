@@ -176,4 +176,40 @@ export class UserController {
       throw new AppError("Erro ao buscar usuários", 500);
     }
   }
+
+  async checkNickname(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { coduser } = req.query;
+      if (!coduser || typeof coduser !== 'string') {
+        res.status(400).json({ available: false, message: 'Nickname não informado.' });
+        return;
+      }
+      const user = await User.findOne({ coduser });
+      if (user) {
+        res.status(200).json({ available: false, message: 'Nickname já está em uso.' });
+      } else {
+        res.status(200).json({ available: true, message: 'Nickname disponível.' });
+      }
+    } catch (error) {
+      res.status(500).json({ available: false, message: 'Erro ao verificar nickname.' });
+    }
+  }
+
+  async checkEmail(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { email } = req.query;
+      if (!email || typeof email !== 'string') {
+        res.status(400).json({ available: false, message: 'E-mail não informado.' });
+        return;
+      }
+      const user = await User.findOne({ email });
+      if (user) {
+        res.status(200).json({ available: false, message: 'E-mail já está em uso.' });
+      } else {
+        res.status(200).json({ available: true, message: 'E-mail disponível.' });
+      }
+    } catch (error) {
+      res.status(500).json({ available: false, message: 'Erro ao verificar e-mail.' });
+    }
+  }
 }
