@@ -473,6 +473,8 @@ export class CardController {
 
   // Método para fazer upload de arquivos (imagens e PDFs)
   async uploadFiles(req: AuthRequest, res: Response): Promise<void> {
+    console.log('req.headers:', req.headers);
+    console.log('req.body:', req.body);
     try {
       const card = req.card;
       const userId = req.user?.id;
@@ -490,7 +492,8 @@ export class CardController {
       }
 
       if (!files || files.length === 0) {
-        throw new AppError("Nenhum arquivo enviado", 400);
+        res.status(400).json({ message: "Nenhum arquivo enviado" });
+        return;
       }
 
       const imageUrls = [];
@@ -560,10 +563,9 @@ export class CardController {
         }
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError("Erro ao fazer upload dos arquivos", 500);
+      console.error(error);
+      res.status(500).json({ message: "Erro ao fazer upload dos arquivos" });
+      return;
     }
   }
 
