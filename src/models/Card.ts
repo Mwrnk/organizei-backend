@@ -8,13 +8,21 @@ export interface IComment extends Document {
   updatedAt: Date;
 }
 
+export interface IImage {
+  data: Buffer;
+  filename: string;
+  mimetype: string;
+  uploaded_at: Date;
+  size_kb?: number;
+}
+
 export interface ICard extends Document {
   listId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   title: string;
   priority: string;
   is_published: boolean;
-  image_url: string[];
+  images: IImage[];
   pdfs: IPdf[];
   likes: number;
   comments: IComment[];
@@ -82,10 +90,13 @@ const cardSchema = new Schema<ICard>(
       type: Boolean,
       default: false,
     },
-    image_url: {
-      type: [String],
-      default: null,
-    },
+    images: [{
+      data: Buffer,
+      filename: String,
+      mimetype: String,
+      uploaded_at: Date,
+      size_kb: Number
+    }],
     pdfs: [{
       data: Buffer,
       filename: String,

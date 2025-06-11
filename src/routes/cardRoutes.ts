@@ -54,6 +54,12 @@ router.post("/cards/:id/files", validateRouteParams, checkCardById, checkCardOwn
 router.get("/cards/:id/pdf/:pdfIndex/download", validateRouteParams, checkCardById, cardController.downloadPdf);
 router.get("/cards/:id/pdf/:pdfIndex/view", validateRouteParams, checkCardById, cardController.viewPdf);
 router.get('/cards/:id/pdfs/', validateRouteParams, cardController.getPdfsByCardId);
+
+// Novas rotas para imagens
+router.get("/cards/:id/image/:imageIndex/view", validateRouteParams, checkCardById, cardController.viewImage);
+router.get("/cards/:id/image/:imageIndex/download", validateRouteParams, checkCardById, cardController.downloadImage);
+router.get('/cards/:id/images/', validateRouteParams, cardController.getImagesByCardId);
+
 router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
 router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
 

@@ -41,6 +41,14 @@ export interface IPdf {
   size_kb?: number;
 }
 
+export interface IImage {
+  data: Buffer;
+  filename: string;
+  mimetype: string;
+  uploaded_at: Date;
+  size_kb?: number;
+}
+
 export class CardController {
   // Método para buscar todos os cards do usuário
   async getAllCards(req: AuthRequest, res: Response): Promise<void> {
@@ -378,42 +386,28 @@ export class CardController {
   async editCard(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
-      const { title, priority, is_published, image_url, content, listId } = req.body;
-      const userId = req.user?.id;
+      const { title, priority, content } = req.body;
 
-      if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
-      }
+      if (title) card.title = title;
+      if (priority) card.priority = priority;
+      if (content) card.content = content;
 
-      if (card.userId.toString() !== userId) {
-        throw new AppError(
-          "Você não tem permissão para editar este cartão",
-          403
-        );
-      }
-
-      const updatedCard = await Card.findByIdAndUpdate(
-        card._id,
-        { title, priority, is_published, image_url, content, listId },
-        { new: true, runValidators: true }
-      );
-
-      if (!updatedCard) {
-        throw new AppError("Cartão não encontrado", 404);
-      }
+      const updatedCard = await card.save();
 
       res.status(200).json({
         status: "success",
         data: {
           id: updatedCard._id,
           title: updatedCard.title,
-          userId: updatedCard.userId,
-          is_published: updatedCard.is_published,
-          image_url: updatedCard.image_url,
-          pdfs: updatedCard.pdfs,
           priority: updatedCard.priority,
           content: updatedCard.content,
+          is_published: updatedCard.is_published,
           listId: updatedCard.listId,
+          userId: updatedCard.userId,
+          likes: updatedCard.likes,
+          downloads: updatedCard.downloads,
+          createdAt: updatedCard.createdAt,
+          updatedAt: updatedCard.updatedAt
         },
       });
     } catch (error) {
@@ -496,24 +490,21 @@ export class CardController {
         return;
       }
 
-      const imageUrls = [];
+      const images = [];
       const pdfs = [];
 
       for (const file of files) {
         if (file.mimetype.startsWith("image/")) {
-          // Para imagens, salvamos em arquivo físico
-          const uploadDir = "uploads";
-          if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-          }
-          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-          const filename = uniqueSuffix + path.extname(file.originalname);
-          const filepath = path.join(uploadDir, filename);
-          
-          fs.writeFileSync(filepath, file.buffer);
-          imageUrls.push(`/uploads/${filename}`);
+          // Para imagens, salvamos no banco
+          images.push({
+            data: file.buffer,
+            filename: file.originalname,
+            mimetype: file.mimetype,
+            uploaded_at: new Date(),
+            size_kb: Math.round(file.size / 1024)
+          });
         } else if (file.mimetype === "application/pdf") {
-          // Para PDFs, salvamos diretamente no banco
+          // Para PDFs, salvamos no banco
           pdfs.push({
             data: file.buffer,
             filename: file.originalname,
@@ -525,9 +516,9 @@ export class CardController {
       }
 
       // Atualiza o card com os novos arquivos
-      if (imageUrls.length > 0) {
-        card.image_url = card.image_url || [];
-        card.image_url = [...card.image_url, ...imageUrls];
+      if (images.length > 0) {
+        card.images = card.images || [];
+        card.images = [...card.images, ...images];
       }
 
       if (pdfs.length > 0) {
@@ -541,7 +532,11 @@ export class CardController {
         status: "success",
         message: "Arquivos enviados com sucesso",
         data: {
-          images: imageUrls,
+          images: images.map(img => ({
+            filename: img.filename,
+            size_kb: img.size_kb,
+            uploaded_at: img.uploaded_at
+          })),
           pdfs: pdfs.map(pdf => ({
             filename: pdf.filename,
             size_kb: pdf.size_kb,
@@ -842,6 +837,77 @@ export class CardController {
         throw error;
       }
       throw new AppError("Erro ao visualizar o PDF", 500);
+    }
+  }
+
+  async viewImage(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const card = req.card;
+      const imageIndex = parseInt(req.params.imageIndex);
+
+      if (!card.images || imageIndex >= card.images.length) {
+        throw new AppError("Imagem não encontrada", 404);
+      }
+
+      const image = card.images[imageIndex];
+      res.setHeader('Content-Type', image.mimetype);
+      res.send(image.data);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao visualizar imagem", 500);
+    }
+  }
+
+  async downloadImage(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const card = req.card;
+      const imageIndex = parseInt(req.params.imageIndex);
+
+      if (!card.images || imageIndex >= card.images.length) {
+        throw new AppError("Imagem não encontrada", 404);
+      }
+
+      const image = card.images[imageIndex];
+      res.setHeader('Content-Type', image.mimetype);
+      res.setHeader('Content-Disposition', `attachment; filename="${image.filename}"`);
+      res.send(image.data);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao baixar imagem", 500);
+    }
+  }
+
+  async getImagesByCardId(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const card = req.card;
+
+      if (!card.images) {
+        res.status(200).json({
+          status: "success",
+          data: []
+        });
+        return;
+      }
+
+      const images = card.images.map((img: IImage) => ({
+        filename: img.filename,
+        size_kb: img.size_kb,
+        uploaded_at: img.uploaded_at
+      }));
+
+      res.status(200).json({
+        status: "success",
+        data: images
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao buscar imagens", 500);
     }
   }
 }
