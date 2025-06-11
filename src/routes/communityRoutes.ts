@@ -8,6 +8,7 @@ import {
   checkCardOwnership
 } from "../middlewares/communityMiddlewares";
 import { AppError } from "../middlewares/errorHandler";
+import { cacheMiddleware } from "../middlewares/cacheMiddleware";
 
 const router = Router();
 const communityController = new CommunityController();
@@ -37,7 +38,7 @@ router.post(
 );
 
 // Rotas de visualização
-router.get("/cards", communityController.getPublishedCards);
+router.get("/cards", cacheMiddleware(600), communityController.getPublishedCards);
 
 // Rotas de interação
 router.post(
