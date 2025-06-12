@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Card, IComment } from "../models/card";
+import { Card, IComment, IImage } from "../models/card";
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 import { User } from "../models/user";
@@ -34,14 +34,6 @@ export const upload = multer({
 });
 
 export interface IPdf {
-  data: Buffer;
-  filename: string;
-  mimetype: string;
-  uploaded_at: Date;
-  size_kb?: number;
-}
-
-export interface IImage {
   data: Buffer;
   filename: string;
   mimetype: string;
@@ -386,28 +378,42 @@ export class CardController {
   async editCard(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
-      const { title, priority, content } = req.body;
+      const { title, priority, is_published, image_url, content, listId } = req.body;
+      const userId = req.user?.id;
 
-      if (title) card.title = title;
-      if (priority) card.priority = priority;
-      if (content) card.content = content;
+      if (!userId) {
+        throw new AppError("Usuário não autenticado", 401);
+      }
 
-      const updatedCard = await card.save();
+      if (card.userId.toString() !== userId) {
+        throw new AppError(
+          "Você não tem permissão para editar este cartão",
+          403
+        );
+      }
+
+      const updatedCard = await Card.findByIdAndUpdate(
+        card._id,
+        { title, priority, is_published, image_url, content, listId },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedCard) {
+        throw new AppError("Cartão não encontrado", 404);
+      }
 
       res.status(200).json({
         status: "success",
         data: {
           id: updatedCard._id,
           title: updatedCard.title,
+          userId: updatedCard.userId,
+          is_published: updatedCard.is_published,
+          images: updatedCard.images,
+          pdfs: updatedCard.pdfs,
           priority: updatedCard.priority,
           content: updatedCard.content,
-          is_published: updatedCard.is_published,
           listId: updatedCard.listId,
-          userId: updatedCard.userId,
-          likes: updatedCard.likes,
-          downloads: updatedCard.downloads,
-          createdAt: updatedCard.createdAt,
-          updatedAt: updatedCard.updatedAt
         },
       });
     } catch (error) {
@@ -490,21 +496,24 @@ export class CardController {
         return;
       }
 
-      const images = [];
+      const imageUrls = [];
       const pdfs = [];
 
       for (const file of files) {
         if (file.mimetype.startsWith("image/")) {
-          // Para imagens, salvamos no banco
-          images.push({
-            data: file.buffer,
-            filename: file.originalname,
-            mimetype: file.mimetype,
-            uploaded_at: new Date(),
-            size_kb: Math.round(file.size / 1024)
-          });
+          // Para imagens, salvamos em arquivo físico
+          const uploadDir = "uploads";
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir);
+          }
+          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+          const filename = uniqueSuffix + path.extname(file.originalname);
+          const filepath = path.join(uploadDir, filename);
+          
+          fs.writeFileSync(filepath, file.buffer);
+          imageUrls.push(`/uploads/${filename}`);
         } else if (file.mimetype === "application/pdf") {
-          // Para PDFs, salvamos no banco
+          // Para PDFs, salvamos diretamente no banco
           pdfs.push({
             data: file.buffer,
             filename: file.originalname,
@@ -516,9 +525,9 @@ export class CardController {
       }
 
       // Atualiza o card com os novos arquivos
-      if (images.length > 0) {
-        card.images = card.images || [];
-        card.images = [...card.images, ...images];
+      if (imageUrls.length > 0) {
+        card.image_url = card.image_url || [];
+        card.image_url = [...card.image_url, ...imageUrls];
       }
 
       if (pdfs.length > 0) {
@@ -532,11 +541,7 @@ export class CardController {
         status: "success",
         message: "Arquivos enviados com sucesso",
         data: {
-          images: images.map(img => ({
-            filename: img.filename,
-            size_kb: img.size_kb,
-            uploaded_at: img.uploaded_at
-          })),
+          images: imageUrls,
           pdfs: pdfs.map(pdf => ({
             filename: pdf.filename,
             size_kb: pdf.size_kb,
