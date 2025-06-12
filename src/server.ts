@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response } from "express";
 import cors from "cors";
 import connectDB from "./config/database";
+import { connectRedis } from "./config/redis";
 import { errorHandler } from "./middlewares/errorHandler";
 import userRoutes from "./routes/userRoutes";
 import planRoutes from "./routes/planRoutes";
@@ -44,6 +45,9 @@ app.use(errorHandler);
 
 // Conectar ao MongoDB
 connectDB();
+
+// Conectar ao Redis
+connectRedis();
 
 // Configurar job para verificar planos expirados (executa diariamente à meia-noite)
 cron.schedule("0 0 * * *", () => {
