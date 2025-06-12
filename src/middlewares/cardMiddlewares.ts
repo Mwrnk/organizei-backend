@@ -50,13 +50,22 @@ export const validateCardUpdateData = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { title, priority, is_published, image_url, listId } = req.body;
+    const { title, priority, is_published, content, listId } = req.body;
 
-    if (!title && !priority && !is_published && !image_url && !listId) {
-      throw new AppError(
-        "Pelo menos um campo deve ser enviado para atualização",
-        400
-      );
+    if (!title && !priority && !is_published && !content && !listId) {
+      throw new AppError("Nenhum campo para atualizar", 400);
+    }
+
+    if (content) {
+      if (typeof content !== "string") {
+        throw new AppError("Conteúdo deve ser uma string", 400);
+      }
+    }
+
+    if (listId) {
+      if (!mongoose.Types.ObjectId.isValid(listId)) {
+        throw new AppError("ID da lista inválido", 400);
+      }
     }
 
     // Validação do título se fornecido
@@ -84,20 +93,6 @@ export const validateCardUpdateData = async (
       const list = await List.findById(listId);
       if (!list) {
         throw new AppError("Lista não encontrada", 404);
-      }
-    }
-
-    // Validação das URLs das imagens se fornecidas
-    if (image_url) {
-      if (!Array.isArray(image_url)) {
-        throw new AppError("image_url deve ser um array de URLs", 400);
-      }
-      
-      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-      for (const url of image_url) {
-        if (!urlRegex.test(url)) {
-          throw new AppError("URL de imagem inválida", 400);
-        }
       }
     }
 

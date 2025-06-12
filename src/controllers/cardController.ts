@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Card, IComment } from "../models/card";
+import { Card, IComment, IImage } from "../models/card";
 import { AppError } from "../middlewares/errorHandler";
 import { AuthRequest } from "../types/express";
 import { User } from "../models/user";
@@ -127,7 +127,7 @@ export class CardController {
           is_published: card.is_published,
           userId: card.userId,
           listId: card.listId,
-          image_url: card.image_url, 
+          images: card.images,
           content: card.content,
         },
       });
@@ -386,19 +386,50 @@ export class CardController {
   async editCard(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
+<<<<<<< Updated upstream
       const { title, priority, content } = req.body;
+=======
+      const { title, priority, is_published, content, listId } = req.body;
+      const userId = req.user?.id;
+>>>>>>> Stashed changes
 
       if (title) card.title = title;
       if (priority) card.priority = priority;
       if (content) card.content = content;
 
+<<<<<<< Updated upstream
       const updatedCard = await card.save();
+=======
+      if (card.userId.toString() !== userId) {
+        throw new AppError(
+          "Você não tem permissão para editar este cartão",
+          403
+        );
+      }
+
+      const updatedCard = await Card.findByIdAndUpdate(
+        card._id,
+        { title, priority, is_published, content, listId },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedCard) {
+        throw new AppError("Cartão não encontrado", 404);
+      }
+>>>>>>> Stashed changes
 
       res.status(200).json({
         status: "success",
         data: {
           id: updatedCard._id,
           title: updatedCard.title,
+<<<<<<< Updated upstream
+=======
+          userId: updatedCard.userId,
+          is_published: updatedCard.is_published,
+          images: updatedCard.images,
+          pdfs: updatedCard.pdfs,
+>>>>>>> Stashed changes
           priority: updatedCard.priority,
           content: updatedCard.content,
           is_published: updatedCard.is_published,
@@ -516,9 +547,21 @@ export class CardController {
       }
 
       // Atualiza o card com os novos arquivos
+<<<<<<< Updated upstream
       if (images.length > 0) {
         card.images = card.images || [];
         card.images = [...card.images, ...images];
+=======
+      if (imageUrls.length > 0) {
+        card.images = card.images || [];
+        card.images = [...card.images, ...imageUrls.map(url => ({
+          data: Buffer.from(url),
+          filename: url.split('/').pop() || 'image.jpg',
+          mimetype: 'image/jpeg',
+          uploaded_at: new Date(),
+          size_kb: 0
+        }))];
+>>>>>>> Stashed changes
       }
 
       if (pdfs.length > 0) {
