@@ -33,11 +33,20 @@ export class UserController {
   async editUser(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { name, dateOfBirth, image } = req.body;
+      const { name, dateOfBirth, image, email, password } = req.body;
+
+      const updateData: any = {};
+      if (name) updateData.name = name;
+      if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
+      if (image) updateData.profileImage = image;
+      if (email) updateData.email = email;
+      if (password) {
+        updateData.password = await hash(password);
+      }
 
       const updatedUser = await User.findByIdAndUpdate(
         id,
-        { name, dateOfBirth, profileImage: image },
+        updateData,
         { new: true, runValidators: true }
       );
 

@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { User } from "../models/user";
+import { User, IUser } from "../models/user";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
 
@@ -9,9 +9,10 @@ export const validateUserData = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, dateOfBirth } = req.body;
+    const { name, dateOfBirth, email, password } = req.body;
 
-    if (!name && !dateOfBirth) {
+    // Se nenhum campo for enviado, retorna erro
+    if (!name && !dateOfBirth && !email && !password) {
       throw new AppError(
         "Pelo menos um campo deve ser enviado para atualização",
         400
@@ -28,6 +29,29 @@ export const validateUserData = async (
       }
     }
 
+    // Validação do email se fornecido
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new AppError("Email inválido", 400);
+      }
+      // Verificar se o email já está em uso
+      const existingUser = await User.findOne({ email }) as IUser | null;
+      if (existingUser && String((existingUser._id as any)) !== req.params.id) {
+        throw new AppError("Este email já está em uso", 400);
+      }
+    }
+
+    // Validação da senha se fornecida
+    if (password) {
+      if (password.length < 8) {
+        throw new AppError("A senha deve ter pelo menos 8 caracteres", 400);
+      }
+      if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+        throw new AppError("A senha deve conter pelo menos uma letra maiúscula, uma minúscula e um número", 400);
+      }
+    }
+
     // Validação da data de nascimento se fornecida
     if (dateOfBirth) {
       const birthDate = new Date(dateOfBirth);
@@ -38,8 +62,8 @@ export const validateUserData = async (
         throw new AppError("Data de nascimento inválida", 400);
       }
       
-      if (age < 10) {
-        throw new AppError("Você deve ter pelo menos 10 anos para se cadastrar", 400);
+      if (age < 13) {
+        throw new AppError("Você deve ter pelo menos 13 anos para se cadastrar", 400);
       }
       
       if (age > 120) {
