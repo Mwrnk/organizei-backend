@@ -1,26 +1,22 @@
-import { Response } from "express";
-import { Card, IComment, IImage } from "../models/card";
-import { AppError } from "../middlewares/errorHandler";
-import { AuthRequest } from "../types/express";
-import { User } from "../models/user";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-import mongoose from "mongoose";
+import { Response } from 'express';
+import { Card, IComment, IImage } from '../models/card';
+import { AppError } from '../middlewares/errorHandler';
+import { AuthRequest } from '../types/express';
+import { User } from '../models/user';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import mongoose from 'mongoose';
 
 // Configuração do Multer para armazenar arquivos em memória
 const storage = multer.memoryStorage();
 
 // Filtro para aceitar apenas imagens e PDFs
-const fileFilter = (
-  req: any,
-  file: Express.Multer.File,
-  cb: multer.FileFilterCallback
-) => {
-  if (file.mimetype.startsWith("image/") || file.mimetype === "application/pdf") {
+const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
     cb(null, true);
   } else {
-    cb(new Error("Tipo de arquivo não suportado. Apenas imagens e PDFs são permitidos."));
+    cb(new Error('Tipo de arquivo não suportado. Apenas imagens e PDFs são permitidos.'));
   }
 };
 
@@ -48,35 +44,38 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
-      const cards = await Card.find({ userId }, {
-        _id: 0,
-        id: "$_id",
-        title: 1,
-        priority: 1,
-        is_published: 1,
-        userId: 1,
-        listId: 1
-      })
+      const cards = await Card.find(
+        { userId },
+        {
+          _id: 0,
+          id: '$_id',
+          title: 1,
+          priority: 1,
+          is_published: 1,
+          userId: 1,
+          listId: 1,
+        }
+      )
         .sort({ createdAt: -1 })
         .populate({
-          path: "listId",
+          path: 'listId',
           populate: {
-            path: "userId",
+            path: 'userId',
           },
         });
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: cards,
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao buscar os cards", 500);
+      throw new AppError('Erro ao buscar os cards', 500);
     }
   }
 
@@ -110,7 +109,7 @@ export class CardController {
       const card = req.card;
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: {
           pdfs: card.pdfs,
           id: card._id,
@@ -119,12 +118,12 @@ export class CardController {
           is_published: card.is_published,
           userId: card.userId,
           listId: card.listId,
-          image_url: card.image_url, 
+          image_url: card.image_url,
           content: card.content,
         },
       });
     } catch (error) {
-      throw new AppError("Erro ao buscar cartão", 500);
+      throw new AppError('Erro ao buscar cartão', 500);
     }
   }
 
@@ -137,21 +136,21 @@ export class CardController {
       const skip = (page - 1) * limit;
 
       // Busca total de documentos para calcular total de páginas
-      const totalDocs = await Card.countDocuments({ 
-        title: { $regex: title, $options: 'i' } 
+      const totalDocs = await Card.countDocuments({
+        title: { $regex: title, $options: 'i' },
       });
 
-      const cards = await Card.find({ 
-        title: { $regex: title, $options: 'i' } 
+      const cards = await Card.find({
+        title: { $regex: title, $options: 'i' },
       })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
 
       const totalPages = Math.ceil(totalDocs / limit);
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: {
           cards,
           pagination: {
@@ -160,12 +159,12 @@ export class CardController {
             totalDocs,
             totalPages,
             hasNextPage: page < totalPages,
-            hasPrevPage: page > 1
-          }
-        }
+            hasPrevPage: page > 1,
+          },
+        },
       });
     } catch (error) {
-      throw new AppError("Erro ao buscar cartão", 500);
+      throw new AppError('Erro ao buscar cartão', 500);
     }
   }
 
@@ -176,27 +175,30 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
-      const cards = await Card.find({ listId, userId }, {
-        _id: 0,
-        id: "$_id",
-        title: 1,
-        priority: 1,
-        is_published: 1,
-        userId: 1,
-      });
+      const cards = await Card.find(
+        { listId, userId },
+        {
+          _id: 0,
+          id: '$_id',
+          title: 1,
+          priority: 1,
+          is_published: 1,
+          userId: 1,
+        }
+      );
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: cards,
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao buscar cartões da lista", 500);
+      throw new AppError('Erro ao buscar cartões da lista', 500);
     }
   }
 
@@ -207,7 +209,7 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       const card = await Card.create({
@@ -218,7 +220,7 @@ export class CardController {
       });
 
       res.status(201).json({
-        status: "success",
+        status: 'success',
         data: {
           id: card._id,
           title: card.title,
@@ -231,7 +233,7 @@ export class CardController {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao criar cartão", 500);
+      throw new AppError('Erro ao criar cartão', 500);
     }
   }
 
@@ -242,7 +244,7 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       // Inicializa o array likedBy se não existir
@@ -251,27 +253,27 @@ export class CardController {
       }
 
       // Verifica se o usuário já deu like no card
-      const hasLiked = card.likedBy.some((id: mongoose.Types.ObjectId) => 
-        id.toString() === userId.toString()
+      const hasLiked = card.likedBy.some(
+        (id: mongoose.Types.ObjectId) => id.toString() === userId.toString()
       );
 
       if (hasLiked) {
         res.status(400).json({
-          status: "fail",
-          message: "Você já curtiu este card"
+          status: 'fail',
+          message: 'Você já curtiu este card',
         });
         return;
       }
 
       // Adiciona o usuário à lista de likes
       card.likedBy.push(new mongoose.Types.ObjectId(userId));
-      
+
       // Incrementa o contador de likes
       card.likes = (card.likes || 0) + 1;
 
       // Calcula quantos likes únicos o card tem (baseado no tamanho do array likedBy)
       const uniqueLikesCount = card.likedBy.length;
-      
+
       // Verifica se atingiu um novo marco de 20 likes únicos
       if (uniqueLikesCount % 1 === 0) {
         const user = await User.findById(card.userId);
@@ -284,20 +286,20 @@ export class CardController {
       await card.save();
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: {
           id: card._id,
           title: card.title,
           likes: card.likes,
           userId: card.userId,
-          uniqueLikes: uniqueLikesCount
+          uniqueLikes: uniqueLikesCount,
         },
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao dar like no cartão", 500);
+      throw new AppError('Erro ao dar like no cartão', 500);
     }
   }
 
@@ -307,31 +309,28 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       // Verifica se o card está publicado
       if (!card.is_published) {
-        throw new AppError(
-          "Este card não está disponível para interações",
-          403
-        );
+        throw new AppError('Este card não está disponível para interações', 403);
       }
 
       // Verifica se o usuário está tentando descurtir seu próprio card
       if (card.userId.toString() === userId) {
-        throw new AppError("Você não pode descurtir seu próprio card", 403);
+        throw new AppError('Você não pode descurtir seu próprio card', 403);
       }
 
       // Verifica se o usuário já deu like no card
-      const hasLiked = card.likedBy.some((id: mongoose.Types.ObjectId) => 
-        id.toString() === userId.toString()
+      const hasLiked = card.likedBy.some(
+        (id: mongoose.Types.ObjectId) => id.toString() === userId.toString()
       );
 
       if (!hasLiked) {
         res.status(400).json({
-          status: "fail",
-          message: "Você ainda não curtiu este card",
+          status: 'fail',
+          message: 'Você ainda não curtiu este card',
         });
         return;
       }
@@ -343,33 +342,33 @@ export class CardController {
 
       // Decrementa o contador de likes
       card.likes = Math.max(0, (card.likes || 0) - 1);
-      
+
       // Calcula quantos likes únicos o card tem
       const uniqueLikesCount = card.likedBy.length;
 
       await card.save();
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: {
           id: card._id,
           title: card.title,
           likes: card.likes,
           userId: card.userId,
-          uniqueLikes: uniqueLikesCount
+          uniqueLikes: uniqueLikesCount,
         },
       });
     } catch (error) {
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
-          status: "fail",
+          status: 'fail',
           message: error.message,
         });
         return;
       }
       res.status(500).json({
-        status: "error",
-        message: "Erro ao remover like do cartão",
+        status: 'error',
+        message: 'Erro ao remover like do cartão',
       });
     }
   }
@@ -382,14 +381,11 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       if (card.userId.toString() !== userId) {
-        throw new AppError(
-          "Você não tem permissão para editar este cartão",
-          403
-        );
+        throw new AppError('Você não tem permissão para editar este cartão', 403);
       }
 
       const updatedCard = await Card.findByIdAndUpdate(
@@ -399,11 +395,11 @@ export class CardController {
       );
 
       if (!updatedCard) {
-        throw new AppError("Cartão não encontrado", 404);
+        throw new AppError('Cartão não encontrado', 404);
       }
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: {
           id: updatedCard._id,
           title: updatedCard.title,
@@ -420,7 +416,7 @@ export class CardController {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao editar cartão", 500);
+      throw new AppError('Erro ao editar cartão', 500);
     }
   }
 
@@ -430,18 +426,17 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
-      const cards = await Card.find({ userId })
-        .sort({ createdAt: -1 });
+      const cards = await Card.find({ userId }).sort({ createdAt: -1 });
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: cards,
       });
     } catch (error) {
-      throw new AppError("Erro ao buscar cards do usuário", 500);
+      throw new AppError('Erro ao buscar cards do usuário', 500);
     }
   }
   // Método para deletar um card
@@ -451,14 +446,11 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       if (card.userId.toString() !== userId) {
-        throw new AppError(
-          "Você não tem permissão para deletar este cartão",
-          403
-        );
+        throw new AppError('Você não tem permissão para deletar este cartão', 403);
       }
 
       await Card.findByIdAndDelete(card._id);
@@ -467,7 +459,7 @@ export class CardController {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao deletar cartão", 500);
+      throw new AppError('Erro ao deletar cartão', 500);
     }
   }
 
@@ -481,18 +473,15 @@ export class CardController {
       const files = req.files as Express.Multer.File[];
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       if (card.userId.toString() !== userId) {
-        throw new AppError(
-          "Você não tem permissão para modificar este cartão",
-          403
-        );
+        throw new AppError('Você não tem permissão para modificar este cartão', 403);
       }
 
       if (!files || files.length === 0) {
-        res.status(400).json({ message: "Nenhum arquivo enviado" });
+        res.status(400).json({ message: 'Nenhum arquivo enviado' });
         return;
       }
 
@@ -500,28 +489,31 @@ export class CardController {
       let image = null;
 
       for (const file of files) {
-        if (file.mimetype.startsWith("image/")) {
-          // Se já existe uma imagem, retorna erro
-          if (card.image) {
-            throw new AppError("Este card já possui uma imagem. Remova a imagem existente antes de adicionar uma nova.", 400);
+        if (file.mimetype.startsWith('image/')) {
+          // Verifica se já existe uma imagem salva de fato (com dados ou nome de arquivo)
+          if (card.image && (card.image.filename || card.image.data)) {
+            throw new AppError(
+              'Este card já possui uma imagem. Remova a imagem existente antes de adicionar uma nova.',
+              400
+            );
           }
-          
+
           // Para imagens, salvamos no banco de dados
           image = {
             data: file.buffer,
             filename: file.originalname,
             mimetype: file.mimetype,
             uploaded_at: new Date(),
-            size_kb: Math.round(file.size / 1024)
+            size_kb: Math.round(file.size / 1024),
           };
-        } else if (file.mimetype === "application/pdf") {
+        } else if (file.mimetype === 'application/pdf') {
           // Para PDFs, salvamos diretamente no banco
           pdfs.push({
             data: file.buffer,
             filename: file.originalname,
             mimetype: file.mimetype,
             uploaded_at: new Date(),
-            size_kb: Math.round(file.size / 1024)
+            size_kb: Math.round(file.size / 1024),
           });
         }
       }
@@ -539,18 +531,20 @@ export class CardController {
       await card.save();
 
       res.status(200).json({
-        status: "success",
-        message: "Arquivos enviados com sucesso",
+        status: 'success',
+        message: 'Arquivos enviados com sucesso',
         data: {
-          image: image ? {
-            filename: image.filename,
-            size_kb: image.size_kb,
-            uploaded_at: image.uploaded_at
-          } : null,
-          pdfs: pdfs.map(pdf => ({
+          image: image
+            ? {
+                filename: image.filename,
+                size_kb: image.size_kb,
+                uploaded_at: image.uploaded_at,
+              }
+            : null,
+          pdfs: pdfs.map((pdf) => ({
             filename: pdf.filename,
             size_kb: pdf.size_kb,
-            uploaded_at: pdf.uploaded_at
+            uploaded_at: pdf.uploaded_at,
           })),
           card: {
             id: card._id,
@@ -563,16 +557,16 @@ export class CardController {
             likes: card.likes,
             downloads: card.downloads,
             createdAt: card.createdAt,
-            updatedAt: card.updatedAt
-          }
-        }
+            updatedAt: card.updatedAt,
+          },
+        },
       });
     } catch (error) {
       console.error(error);
       if (error instanceof AppError) {
         throw error;
       }
-      res.status(500).json({ message: "Erro ao fazer upload dos arquivos" });
+      res.status(500).json({ message: 'Erro ao fazer upload dos arquivos' });
       return;
     }
   }
@@ -585,7 +579,7 @@ export class CardController {
       const { text } = req.body;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       const comment = {
@@ -600,7 +594,7 @@ export class CardController {
       await card.save();
 
       res.status(201).json({
-        status: "success",
+        status: 'success',
         data: {
           comment,
           card: {
@@ -613,7 +607,7 @@ export class CardController {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao adicionar comentário", 500);
+      throw new AppError('Erro ao adicionar comentário', 500);
     }
   }
 
@@ -643,14 +637,14 @@ export class CardController {
       );
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: populatedComments,
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao buscar comentários", 500);
+      throw new AppError('Erro ao buscar comentários', 500);
     }
   }
 
@@ -662,30 +656,29 @@ export class CardController {
       const { commentId } = req.params;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       const commentIndex = card.comments.findIndex(
-        (c: IComment) =>
-          c._id.toString() === commentId && c.userId.toString() === userId
+        (c: IComment) => c._id.toString() === commentId && c.userId.toString() === userId
       );
 
       if (commentIndex === -1) {
-        throw new AppError("Comentário não encontrado ou sem permissão", 404);
+        throw new AppError('Comentário não encontrado ou sem permissão', 404);
       }
 
       card.comments.splice(commentIndex, 1);
       await card.save();
 
       res.status(200).json({
-        status: "success",
-        message: "Comentário removido com sucesso",
+        status: 'success',
+        message: 'Comentário removido com sucesso',
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao remover comentário", 500);
+      throw new AppError('Erro ao remover comentário', 500);
     }
   }
 
@@ -697,23 +690,23 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       // Verifica se o card está publicado ou se o usuário é o dono
       if (!card.is_published && card.userId.toString() !== userId) {
-        throw new AppError("Você não tem permissão para acessar este PDF", 403);
+        throw new AppError('Você não tem permissão para acessar este PDF', 403);
       }
 
       // Verifica se o card tem PDFs - retorna resposta JSON em vez de erro
       if (!card.pdfs || card.pdfs.length === 0) {
         res.status(200).json({
-          status: "info",
-          message: "Este card não possui PDFs disponíveis para download",
+          status: 'info',
+          message: 'Este card não possui PDFs disponíveis para download',
           data: {
             hasPdfs: false,
-            cardTitle: card.title
-          }
+            cardTitle: card.title,
+          },
         });
         return;
       }
@@ -721,13 +714,13 @@ export class CardController {
       const pdfIndexNum = parseInt(pdfIndex);
       if (isNaN(pdfIndexNum) || pdfIndexNum < 0 || pdfIndexNum >= card.pdfs.length) {
         res.status(200).json({
-          status: "info",
-          message: "PDF não encontrado no índice especificado",
+          status: 'info',
+          message: 'PDF não encontrado no índice especificado',
           data: {
             hasPdfs: true,
             availablePdfs: card.pdfs.length,
-            requestedIndex: pdfIndexNum
-          }
+            requestedIndex: pdfIndexNum,
+          },
         });
         return;
       }
@@ -749,7 +742,7 @@ export class CardController {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao fazer download do PDF", 500);
+      throw new AppError('Erro ao fazer download do PDF', 500);
     }
   }
 
@@ -757,24 +750,24 @@ export class CardController {
     try {
       const cardId = req.params.id;
 
-      const pdfsFromCard = await Card.findById(cardId, { 
-        "pdfs.filename": 1,
-        "pdfs.mimetype": 1,
-        "pdfs.uploaded_at": 1,
-        "pdfs.size_kb": 1
+      const pdfsFromCard = await Card.findById(cardId, {
+        'pdfs.filename': 1,
+        'pdfs.mimetype': 1,
+        'pdfs.uploaded_at': 1,
+        'pdfs.size_kb': 1,
       });
 
       res.status(200).json({
-        status: "success",
-        pdfsFromCard
+        status: 'success',
+        pdfsFromCard,
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao visualizar o PDF", 500);
+      throw new AppError('Erro ao visualizar o PDF', 500);
     }
-  }
+  };
 
   // Método para visualizar PDF
   async viewPdf(req: AuthRequest, res: Response): Promise<void> {
@@ -785,28 +778,28 @@ export class CardController {
 
       const card = await Card.findById(cardId);
 
-      if(!card){
-        throw new AppError("Cartão não encontrado", 404);
+      if (!card) {
+        throw new AppError('Cartão não encontrado', 404);
       }
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       // Verifica se o card está publicado ou se o usuário é o dono
       if (!card.is_published && card.userId.toString() !== userId) {
-        throw new AppError("Você não tem permissão para acessar este PDF", 403);
+        throw new AppError('Você não tem permissão para acessar este PDF', 403);
       }
 
       // Verifica se o card tem PDFs - retorna resposta JSON em vez de erro
       if (!card.pdfs || card.pdfs.length === 0) {
         res.status(200).json({
-          status: "info",
-          message: "Este card não possui PDFs disponíveis",
+          status: 'info',
+          message: 'Este card não possui PDFs disponíveis',
           data: {
             hasPdfs: false,
-            cardTitle: card.title
-          }
+            cardTitle: card.title,
+          },
         });
         return;
       }
@@ -814,13 +807,13 @@ export class CardController {
       const pdfIndexNum = parseInt(pdfIndex);
       if (isNaN(pdfIndexNum) || pdfIndexNum < 0 || pdfIndexNum >= card.pdfs.length) {
         res.status(200).json({
-          status: "info",
-          message: "PDF não encontrado no índice especificado",
+          status: 'info',
+          message: 'PDF não encontrado no índice especificado',
           data: {
             hasPdfs: true,
             availablePdfs: card.pdfs.length,
-            requestedIndex: pdfIndexNum
-          }
+            requestedIndex: pdfIndexNum,
+          },
         });
         return;
       }
@@ -828,12 +821,12 @@ export class CardController {
       const pdf = card.pdfs[pdfIndexNum];
       if (!pdf || !pdf.data) {
         res.status(200).json({
-          status: "info", 
-          message: "PDF corrompido ou vazio",
+          status: 'info',
+          message: 'PDF corrompido ou vazio',
           data: {
             hasPdfs: true,
-            pdfExists: false
-          }
+            pdfExists: false,
+          },
         });
         return;
       }
@@ -849,7 +842,7 @@ export class CardController {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao visualizar o PDF", 500);
+      throw new AppError('Erro ao visualizar o PDF', 500);
     }
   }
 
@@ -858,7 +851,7 @@ export class CardController {
       const card = req.card;
 
       if (!card.image) {
-        throw new AppError("Este card não possui imagem", 404);
+        throw new AppError('Este card não possui imagem', 404);
       }
 
       res.setHeader('Content-Type', card.image.mimetype);
@@ -867,7 +860,7 @@ export class CardController {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao visualizar imagem", 500);
+      throw new AppError('Erro ao visualizar imagem', 500);
     }
   }
 
@@ -876,7 +869,7 @@ export class CardController {
       const card = req.card;
 
       if (!card.image) {
-        throw new AppError("Este card não possui imagem", 404);
+        throw new AppError('Este card não possui imagem', 404);
       }
 
       res.setHeader('Content-Type', card.image.mimetype);
@@ -886,7 +879,7 @@ export class CardController {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao baixar imagem", 500);
+      throw new AppError('Erro ao baixar imagem', 500);
     }
   }
 
@@ -896,25 +889,25 @@ export class CardController {
 
       if (!card.image) {
         res.status(200).json({
-          status: "success",
-          data: null
+          status: 'success',
+          data: null,
         });
         return;
       }
 
       res.status(200).json({
-        status: "success",
+        status: 'success',
         data: {
           filename: card.image.filename,
           size_kb: card.image.size_kb,
-          uploaded_at: card.image.uploaded_at
-        }
+          uploaded_at: card.image.uploaded_at,
+        },
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao buscar informações da imagem", 500);
+      throw new AppError('Erro ao buscar informações da imagem', 500);
     }
   }
 
@@ -924,32 +917,29 @@ export class CardController {
       const userId = req.user?.id;
 
       if (!userId) {
-        throw new AppError("Usuário não autenticado", 401);
+        throw new AppError('Usuário não autenticado', 401);
       }
 
       if (card.userId.toString() !== userId) {
-        throw new AppError(
-          "Você não tem permissão para modificar este cartão",
-          403
-        );
+        throw new AppError('Você não tem permissão para modificar este cartão', 403);
       }
 
       if (!card.image) {
-        throw new AppError("Este card não possui imagem para remover", 404);
+        throw new AppError('Este card não possui imagem para remover', 404);
       }
 
       card.image = null;
       await card.save();
 
       res.status(200).json({
-        status: "success",
-        message: "Imagem removida com sucesso"
+        status: 'success',
+        message: 'Imagem removida com sucesso',
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao remover imagem", 500);
+      throw new AppError('Erro ao remover imagem', 500);
     }
   }
 }
