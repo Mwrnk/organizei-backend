@@ -409,7 +409,7 @@ export class CardController {
           title: updatedCard.title,
           userId: updatedCard.userId,
           is_published: updatedCard.is_published,
-          images: updatedCard.images,
+          image: updatedCard.image,
           pdfs: updatedCard.pdfs,
           priority: updatedCard.priority,
           content: updatedCard.content,
