@@ -52,7 +52,11 @@ node_cron_1.default.schedule("0 0 * * *", () => {
 app.get("/", (req, res) => {
     res.send("A API está online");
 });
-const PORT = process.env.PORT || 3000;
-app.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
-});
+// Só roda o servidor localmente se não estiver em ambiente serverless
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL_DEV) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(Number(PORT), '0.0.0.0', () => {
+        console.log(`Servidor rodando na porta ${PORT}`);
+    });
+}
+exports.default = app;

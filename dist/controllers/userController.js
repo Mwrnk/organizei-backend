@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
-const user_1 = require("../models/user");
+const User_1 = require("../models/User");
 const hashManager_1 = require("../utils/hashManager");
 const tokenManager_1 = require("../utils/tokenManager");
 const errorHandler_1 = require("../middlewares/errorHandler");
@@ -20,7 +20,7 @@ class UserController {
             try {
                 const { id } = req.params;
                 const { image } = req.body;
-                const user = yield user_1.User.findByIdAndUpdate(id, { profileImage: image }, { new: true });
+                const user = yield User_1.User.findByIdAndUpdate(id, { profileImage: image }, { new: true });
                 if (!user) {
                     throw new errorHandler_1.AppError("Usuário não encontrado", 404);
                 }
@@ -39,7 +39,7 @@ class UserController {
             try {
                 const { id } = req.params;
                 const { name, dateOfBirth, image } = req.body;
-                const updatedUser = yield user_1.User.findByIdAndUpdate(id, { name, dateOfBirth, profileImage: image }, { new: true, runValidators: true });
+                const updatedUser = yield User_1.User.findByIdAndUpdate(id, { name, dateOfBirth, profileImage: image }, { new: true, runValidators: true });
                 if (!updatedUser) {
                     throw new errorHandler_1.AppError("Usuário não encontrado", 404);
                 }
@@ -66,7 +66,7 @@ class UserController {
             try {
                 const { coduser, name, dateOfBirth, email, password } = req.body;
                 const hashedPassword = yield (0, hashManager_1.hash)(password);
-                const user = yield user_1.User.create({
+                const user = yield User_1.User.create({
                     coduser,
                     name,
                     dateOfBirth,
@@ -101,7 +101,7 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email, password } = req.body;
-                const user = yield user_1.User.findOne({ email }).select("+password");
+                const user = yield User_1.User.findOne({ email }).select("+password");
                 if (!user) {
                     res.status(404).json({
                         status: "fail",
@@ -142,7 +142,7 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { id } = req.params;
-                const user = yield user_1.User.findById(id).select("-password");
+                const user = yield User_1.User.findById(id).select("-password");
                 if (!user) {
                     throw new errorHandler_1.AppError("Usuário não encontrado", 404);
                 }
@@ -162,7 +162,7 @@ class UserController {
     getUsers(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const users = yield user_1.User.find().select("-password");
+                const users = yield User_1.User.find().select("-password");
                 res.status(200).json({
                     status: "success",
                     data: users,
@@ -181,7 +181,7 @@ class UserController {
                     res.status(400).json({ available: false, message: 'Nickname não informado.' });
                     return;
                 }
-                const user = yield user_1.User.findOne({ coduser });
+                const user = yield User_1.User.findOne({ coduser });
                 if (user) {
                     res.status(200).json({ available: false, message: 'Nickname já está em uso.' });
                 }
@@ -202,7 +202,7 @@ class UserController {
                     res.status(400).json({ available: false, message: 'E-mail não informado.' });
                     return;
                 }
-                const user = yield user_1.User.findOne({ email });
+                const user = yield User_1.User.findOne({ email });
                 if (user) {
                     res.status(200).json({ available: false, message: 'E-mail já está em uso.' });
                 }
