@@ -496,22 +496,24 @@ export class CardController {
         return;
       }
 
-      const imageUrls = [];
       const pdfs = [];
+      let image = null;
 
       for (const file of files) {
         if (file.mimetype.startsWith("image/")) {
-          // Para imagens, salvamos em arquivo físico
-          const uploadDir = "uploads";
-          if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
+          // Se já existe uma imagem, retorna erro
+          if (card.image) {
+            throw new AppError("Este card já possui uma imagem. Remova a imagem existente antes de adicionar uma nova.", 400);
           }
-          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-          const filename = uniqueSuffix + path.extname(file.originalname);
-          const filepath = path.join(uploadDir, filename);
           
-          fs.writeFileSync(filepath, file.buffer);
-          imageUrls.push(`/uploads/${filename}`);
+          // Para imagens, salvamos no banco de dados
+          image = {
+            data: file.buffer,
+            filename: file.originalname,
+            mimetype: file.mimetype,
+            uploaded_at: new Date(),
+            size_kb: Math.round(file.size / 1024)
+          };
         } else if (file.mimetype === "application/pdf") {
           // Para PDFs, salvamos diretamente no banco
           pdfs.push({
@@ -525,9 +527,8 @@ export class CardController {
       }
 
       // Atualiza o card com os novos arquivos
-      if (imageUrls.length > 0) {
-        card.image_url = card.image_url || [];
-        card.image_url = [...card.image_url, ...imageUrls];
+      if (image) {
+        card.image = image;
       }
 
       if (pdfs.length > 0) {
@@ -541,7 +542,11 @@ export class CardController {
         status: "success",
         message: "Arquivos enviados com sucesso",
         data: {
-          images: imageUrls,
+          image: image ? {
+            filename: image.filename,
+            size_kb: image.size_kb,
+            uploaded_at: image.uploaded_at
+          } : null,
           pdfs: pdfs.map(pdf => ({
             filename: pdf.filename,
             size_kb: pdf.size_kb,
@@ -564,6 +569,9 @@ export class CardController {
       });
     } catch (error) {
       console.error(error);
+      if (error instanceof AppError) {
+        throw error;
+      }
       res.status(500).json({ message: "Erro ao fazer upload dos arquivos" });
       return;
     }
@@ -848,15 +856,13 @@ export class CardController {
   async viewImage(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
-      const imageIndex = parseInt(req.params.imageIndex);
 
-      if (!card.images || imageIndex >= card.images.length) {
-        throw new AppError("Imagem não encontrada", 404);
+      if (!card.image) {
+        throw new AppError("Este card não possui imagem", 404);
       }
 
-      const image = card.images[imageIndex];
-      res.setHeader('Content-Type', image.mimetype);
-      res.send(image.data);
+      res.setHeader('Content-Type', card.image.mimetype);
+      res.send(card.image.data);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -868,16 +874,14 @@ export class CardController {
   async downloadImage(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
-      const imageIndex = parseInt(req.params.imageIndex);
 
-      if (!card.images || imageIndex >= card.images.length) {
-        throw new AppError("Imagem não encontrada", 404);
+      if (!card.image) {
+        throw new AppError("Este card não possui imagem", 404);
       }
 
-      const image = card.images[imageIndex];
-      res.setHeader('Content-Type', image.mimetype);
-      res.setHeader('Content-Disposition', `attachment; filename="${image.filename}"`);
-      res.send(image.data);
+      res.setHeader('Content-Type', card.image.mimetype);
+      res.setHeader('Content-Disposition', `attachment; filename="${card.image.filename}"`);
+      res.send(card.image.data);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -886,33 +890,66 @@ export class CardController {
     }
   }
 
-  async getImagesByCardId(req: AuthRequest, res: Response): Promise<void> {
+  async getImageInfo(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
 
-      if (!card.images) {
+      if (!card.image) {
         res.status(200).json({
           status: "success",
-          data: []
+          data: null
         });
         return;
       }
 
-      const images = card.images.map((img: IImage) => ({
-        filename: img.filename,
-        size_kb: img.size_kb,
-        uploaded_at: img.uploaded_at
-      }));
-
       res.status(200).json({
         status: "success",
-        data: images
+        data: {
+          filename: card.image.filename,
+          size_kb: card.image.size_kb,
+          uploaded_at: card.image.uploaded_at
+        }
       });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError("Erro ao buscar imagens", 500);
+      throw new AppError("Erro ao buscar informações da imagem", 500);
+    }
+  }
+
+  async removeImage(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const card = req.card;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AppError("Usuário não autenticado", 401);
+      }
+
+      if (card.userId.toString() !== userId) {
+        throw new AppError(
+          "Você não tem permissão para modificar este cartão",
+          403
+        );
+      }
+
+      if (!card.image) {
+        throw new AppError("Este card não possui imagem para remover", 404);
+      }
+
+      card.image = null;
+      await card.save();
+
+      res.status(200).json({
+        status: "success",
+        message: "Imagem removida com sucesso"
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError("Erro ao remover imagem", 500);
     }
   }
 }

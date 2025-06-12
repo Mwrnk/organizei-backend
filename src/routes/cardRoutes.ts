@@ -45,22 +45,27 @@ router.get("/cards/title/:title", validateRouteParams, checkCardByTitle, cardCon
 router.get("/lists/:listId/cards", validateRouteParams, cardController.getCardsByListId);
 router.get('/cards/user/:userId', validateRouteParams, cardController.getCardsByUserId);
 
-// Rotas de manipulação
+// Rotas de manipulação básica
 router.post("/cards", validateCardData, cardController.createCard);
+router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
+router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
+
+// Rotas de interação (likes)
 router.post("/cards/:id/like", validateRouteParams, checkCardById, validateLikeOperation, cardController.likeCard);
 router.post("/cards/:id/unlike", validateRouteParams, checkCardById, validateLikeOperation, cardController.unlikeCard);
 
+// Rotas de arquivos
 router.post("/cards/:id/files", validateRouteParams, checkCardById, checkCardOwnership, upload.array('files', 5) as any, cardController.uploadFiles);
+
+// Rotas de PDFs
 router.get("/cards/:id/pdf/:pdfIndex/download", validateRouteParams, checkCardById, cardController.downloadPdf);
 router.get("/cards/:id/pdf/:pdfIndex/view", validateRouteParams, checkCardById, cardController.viewPdf);
-router.get('/cards/:id/pdfs/', validateRouteParams, cardController.getPdfsByCardId);
+router.get('/cards/:id/pdfs/', validateRouteParams, checkCardById, cardController.getPdfsByCardId);
 
-// Novas rotas para imagens
-router.get("/cards/:id/image/:imageIndex/view", validateRouteParams, checkCardById, cardController.viewImage);
-router.get("/cards/:id/image/:imageIndex/download", validateRouteParams, checkCardById, cardController.downloadImage);
-router.get('/cards/:id/images/', validateRouteParams, cardController.getImagesByCardId);
-
-router.patch("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, validateCardUpdateData, cardController.editCard);
-router.delete("/cards/:id", validateRouteParams, checkCardById, checkCardOwnership, cardController.deleteCard);
+// Rotas de imagem
+router.get('/cards/:id/image/info', validateRouteParams, checkCardById, cardController.getImageInfo);
+router.get("/cards/:id/image/view", validateRouteParams, checkCardById, cardController.viewImage);
+router.get("/cards/:id/image/download", validateRouteParams, checkCardById, cardController.downloadImage);
+router.delete('/cards/:id/image', validateRouteParams, checkCardById, checkCardOwnership, cardController.removeImage);
 
 export default router;

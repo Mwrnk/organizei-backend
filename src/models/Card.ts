@@ -22,7 +22,7 @@ export interface ICard extends Document {
   title: string;
   priority: string;
   is_published: boolean;
-  images: IImage[];
+  image: IImage | null;
   pdfs: IPdf[];
   likes: number;
   comments: IComment[];
@@ -90,13 +90,13 @@ const cardSchema = new Schema<ICard>(
       type: Boolean,
       default: false,
     },
-    images: [{
+    image: {
       data: Buffer,
       filename: String,
       mimetype: String,
       uploaded_at: Date,
       size_kb: Number
-    }],
+    },
     pdfs: [{
       data: Buffer,
       filename: String,
