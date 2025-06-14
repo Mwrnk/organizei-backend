@@ -463,10 +463,8 @@ export class CardController {
     }
   }
 
-  // Método para fazer upload de arquivos (imagens e PDFs)
-  async uploadFiles(req: AuthRequest, res: Response): Promise<void> {
-    console.log('req.headers:', req.headers);
-    console.log('req.body:', req.body);
+  // Método para fazer upload de PDFs
+  async uploadPdfs(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
       const userId = req.user?.id;
@@ -486,28 +484,9 @@ export class CardController {
       }
 
       const pdfs = [];
-      let image = null;
 
       for (const file of files) {
-        if (file.mimetype.startsWith('image/')) {
-          // Verifica se já existe uma imagem salva de fato (com dados ou nome de arquivo)
-          if (card.image && (card.image.filename || card.image.data)) {
-            throw new AppError(
-              'Este card já possui uma imagem. Remova a imagem existente antes de adicionar uma nova.',
-              400
-            );
-          }
-
-          // Para imagens, salvamos no banco de dados
-          image = {
-            data: file.buffer,
-            filename: file.originalname,
-            mimetype: file.mimetype,
-            uploaded_at: new Date(),
-            size_kb: Math.round(file.size / 1024),
-          };
-        } else if (file.mimetype === 'application/pdf') {
-          // Para PDFs, salvamos diretamente no banco
+        if (file.mimetype === 'application/pdf') {
           pdfs.push({
             data: file.buffer,
             filename: file.originalname,
@@ -515,12 +494,9 @@ export class CardController {
             uploaded_at: new Date(),
             size_kb: Math.round(file.size / 1024),
           });
+        } else {
+          throw new AppError('Apenas arquivos PDF são permitidos', 400);
         }
-      }
-
-      // Atualiza o card com os novos arquivos
-      if (image) {
-        card.image = image;
       }
 
       if (pdfs.length > 0) {
@@ -532,15 +508,8 @@ export class CardController {
 
       res.status(200).json({
         status: 'success',
-        message: 'Arquivos enviados com sucesso',
+        message: 'PDFs enviados com sucesso',
         data: {
-          image: image
-            ? {
-                filename: image.filename,
-                size_kb: image.size_kb,
-                uploaded_at: image.uploaded_at,
-              }
-            : null,
           pdfs: pdfs.map((pdf) => ({
             filename: pdf.filename,
             size_kb: pdf.size_kb,
@@ -566,7 +535,84 @@ export class CardController {
       if (error instanceof AppError) {
         throw error;
       }
-      res.status(500).json({ message: 'Erro ao fazer upload dos arquivos' });
+      res.status(500).json({ message: 'Erro ao fazer upload dos PDFs' });
+      return;
+    }
+  }
+
+  // Método para fazer upload de imagem
+  async uploadImage(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const card = req.card;
+      const userId = req.user?.id;
+      const file = req.file as Express.Multer.File;
+
+      if (!userId) {
+        throw new AppError('Usuário não autenticado', 401);
+      }
+
+      if (card.userId.toString() !== userId) {
+        throw new AppError('Você não tem permissão para modificar este cartão', 403);
+      }
+
+      if (!file) {
+        res.status(400).json({ message: 'Nenhuma imagem enviada' });
+        return;
+      }
+
+      if (!file.mimetype.startsWith('image/')) {
+        throw new AppError('Apenas imagens são permitidas', 400);
+      }
+
+      // Verifica se já existe uma imagem salva
+      if (card.image && (card.image.filename || card.image.data)) {
+        throw new AppError(
+          'Este card já possui uma imagem. Remova a imagem existente antes de adicionar uma nova.',
+          400
+        );
+      }
+
+      const image = {
+        data: file.buffer,
+        filename: file.originalname,
+        mimetype: file.mimetype,
+        uploaded_at: new Date(),
+        size_kb: Math.round(file.size / 1024),
+      };
+
+      card.image = image;
+      await card.save();
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Imagem enviada com sucesso',
+        data: {
+          image: {
+            filename: image.filename,
+            size_kb: image.size_kb,
+            uploaded_at: image.uploaded_at,
+          },
+          card: {
+            id: card._id,
+            title: card.title,
+            content: card.content,
+            priority: card.priority,
+            is_published: card.is_published,
+            listId: card.listId,
+            userId: card.userId,
+            likes: card.likes,
+            downloads: card.downloads,
+            createdAt: card.createdAt,
+            updatedAt: card.updatedAt,
+          },
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      res.status(500).json({ message: 'Erro ao fazer upload da imagem' });
       return;
     }
   }
