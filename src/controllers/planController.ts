@@ -205,4 +205,66 @@ export class PlanController {
       throw new AppError("Erro ao atualizar plano do usuário", 500);
     }
   }
+
+  async updateUserPlanPoints(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const { planId } = req.body;
+
+      if (!planId) {
+        throw new AppError("O ID do plano é obrigatório", 400);
+      }
+
+      const plan = await Plan.findById(planId);
+      if (!plan) {
+        throw new AppError("Plano não encontrado", 404);
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new AppError("Usuário não encontrado", 404);
+      }
+
+      // Verifica se o usuário tem pontos suficientes
+      if (!user.orgPoints || user.orgPoints < 100) {
+        throw new AppError("Você não tem pontos suficientes para esta operação", 400);
+      }
+
+      // Encerrar plano atual se existir
+      if (user.plan) {
+        await PlanHistory.findOneAndUpdate(
+          { userId: user._id, status: "active" },
+          {
+            endDate: new Date(),
+            status: "cancelled",
+            reason: "Mudança de plano usando pontos",
+          }
+        );
+      }
+
+      // Criar novo registro de histórico
+      await PlanHistory.create({
+        userId: user._id,
+        planId: plan._id,
+        reason: "Atualização de plano usando pontos",
+      });
+
+      // Atualizar plano do usuário e descontar os pontos
+      user.plan = plan._id as mongoose.Types.ObjectId;
+      user.orgPoints -= 100;
+      await user.save();
+
+      res.status(200).json({
+        status: "success",
+        data: {
+          user,
+          pointsDeducted: 100,
+          remainingPoints: user.orgPoints
+        },
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar plano do usuário com pontos:", error);
+      throw new AppError("Erro ao atualizar plano do usuário com pontos", 500);
+    }
+  }
 }

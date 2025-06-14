@@ -14,5 +14,6 @@ router.get("/users/:userId/plan", authMiddleware, (req, res) =>    planControlle
 router.get("/users/:userId/plan-history", authMiddleware, (req, res) => planController.getUserPlanHistory(req, res));
 router.post("/plans", authMiddleware, (req, res) => planController.createPlan(req, res));
 router.put("/users/:userId/plan", authMiddleware, (req, res) => planController.updateUserPlan(req, res));
+router.put("/users/:userId/plan/points", authMiddleware, (req, res) => planController.updateUserPlanPoints(req, res));
 
 export default router;
