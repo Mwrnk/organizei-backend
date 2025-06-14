@@ -107,6 +107,7 @@ export class CardController {
   async getCardById(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
+      const userId = req.user?.id?.toString();
 
       res.status(200).json({
         status: 'success',
@@ -118,8 +119,10 @@ export class CardController {
           is_published: card.is_published,
           userId: card.userId,
           listId: card.listId,
-          image_url: card.image_url,
+          image_url: (card as any).image_url,
           content: card.content,
+          likes: card.likes,
+          likedByUser: !!(userId && card.likedBy?.some((id: any) => id.toString() === userId)),
         },
       });
     } catch (error) {
