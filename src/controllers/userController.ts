@@ -73,7 +73,10 @@ export class UserController {
 
   async signup(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { coduser, name, dateOfBirth, email, password } = req.body;
+      let { coduser, name, dateOfBirth, email, password } = req.body;
+      // Padroniza o email
+      email = email.trim().toLowerCase();
+      console.log('[SIGNUP] Payload recebido:', { coduser, name, dateOfBirth, email });
 
       const hashedPassword = await hash(password);
       const user = await User.create({
@@ -101,6 +104,7 @@ export class UserController {
         },
       });
     } catch (error) {
+      console.error('[SIGNUP] Erro ao criar usuário:', error);
       if (error instanceof AppError) {
         throw error;
       }
@@ -110,8 +114,13 @@ export class UserController {
 
   async login(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { email, password } = req.body;
+      console.log('[LOGIN] Body recebido:', req.body);
+      let { email, password } = req.body;
+      // Padroniza o email
+      email = email.trim().toLowerCase();
+      console.log('[LOGIN] Tentando login com:', { email });
       const user = await User.findOne({ email }).select("+password");
+      console.log('[LOGIN] Usuário encontrado:', user ? user.email : 'Nenhum usuário encontrado');
 
       if (!user) {
         res.status(404).json({
@@ -122,6 +131,7 @@ export class UserController {
       }
 
       const isPasswordValid = await compare(password, user.password);
+      console.log('[LOGIN] Senha válida?', isPasswordValid);
 
       if (!isPasswordValid) {
         res.status(401).json({
@@ -145,6 +155,7 @@ export class UserController {
         },
       });
     } catch (error) {
+      console.error('[LOGIN] Erro interno:', error);
       res.status(500).json({
         status: "error",
         message: "Erro interno do servidor"
