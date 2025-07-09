@@ -3,7 +3,6 @@ import { Card } from "../models/card";
 import { List } from "../models/list";
 import { AppError } from "./errorHandler";
 import { AuthRequest } from "../types/express";
-import mongoose from "mongoose";
 
 export const validateCardData = async (
   req: AuthRequest,
@@ -11,6 +10,7 @@ export const validateCardData = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    // Verifica se o usuário está autenticado
     const { title, listId, priority } = req.body;
 
     if (!title || !listId) {
@@ -92,7 +92,7 @@ export const validateCardUpdateData = async (
       if (!Array.isArray(image_url)) {
         throw new AppError("image_url deve ser um array de URLs", 400);
       }
-      
+
       const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
       for (const url of image_url) {
         if (!urlRegex.test(url)) {

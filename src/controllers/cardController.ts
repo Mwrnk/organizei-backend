@@ -79,31 +79,7 @@ export class CardController {
     }
   }
 
-  // Método para buscar um card específico por ID
-  // async getCardById(req: AuthRequest, res: Response): Promise<void> {
-  //   try {
-  //     const card = req.card;
-
-  //     res.status(200).json({
-  //       status: "success",
-  //       data: {
-  //         id: card._id,
-  //         title: card.title,
-  //         priority: card.priority,
-  //         is_published: card.is_published,
-  //         userId: card.userId,
-  //         listId: card.listId,
-  //       },
-  //     });
-  //   } catch (error) {
-  //     if (error instanceof AppError) {
-  //       throw error;
-  //     }
-  //     throw new AppError("Erro ao buscar cartão", 500);
-  //   }
-  // }
-
-  //atualizado getCardById para devolver o pdf e imagens dos cards
+  // Método para buscar um card pelo ID
   async getCardById(req: AuthRequest, res: Response): Promise<void> {
     try {
       const card = req.card;
@@ -676,10 +652,10 @@ export class CardController {
             updatedAt: comment.updatedAt,
             user: user
               ? {
-                  id: user._id,
-                  name: user.name,
-                  email: user.email,
-                }
+                id: user._id,
+                name: user.name,
+                email: user.email,
+              }
               : null,
           };
         })

@@ -11,11 +11,10 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
       throw new AppError('Token não fornecido', 401);
     }
 
-    //   const [token] = authHeader.split(' '); <- antes estava assim
     let token = authHeader;
-    // Se o header vier no formato "Bearer <token>", extrai só o token
     if (authHeader.startsWith('Bearer ')) {
       token = authHeader.split(' ')[1];
+      
     }
 
     if (!token) {
